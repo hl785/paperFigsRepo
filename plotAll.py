@@ -74,6 +74,19 @@ def paramTransform(gamma):
 
     return a, b
 
+def getLen5Order4Man():
+    offset = 0.001
+    zs = np.concatenate((np.linspace(-2.0, 0.0-offset, 4000),np.linspace(0.5+offset, 2.0, 3000)))
+    inter1 = zs*(1.0-2*zs)
+    inter2 = np.sqrt(3*np.power(zs, 4) - 3*np.power(zs, 3) + np.power(zs, 2) - 0.125*zs)
+    inter3 = 3*zs*(8*np.power(zs, 3) - 8*np.power(zs, 2) + 1.0)
+    ysPlus = (inter1 + inter2)/inter3
+    ysMinus = (inter1 - inter2)/inter3
+    inter4 = 4*np.power(zs, 2) - 4*zs + 1.0
+    xsPlus = 1.0/6.0 - ysPlus*inter4
+    xsMinus = 1.0/6.0 - ysMinus*inter4
+    return xsPlus, xsMinus, ysPlus, ysMinus, zs
+
 ###################################################################################################################################
 
 #################
@@ -152,6 +165,31 @@ def loadLossConvOrig():
            [highQTrot, highQStrang, highQYosh, highQLearn5A, highQLearn8A, highQLearn8B], \
            [stepSizeTrot, stepSizeStrang, stepSizeYosh, stepSizeLearn5A, stepSizeLearn8A, stepSizeLearn8B]
 
+def loadLossLandOrig():
+    with np.load('lossLandOrig.npz') as data:
+        gammaVals1 = data['possibleVals1']
+        gammaVals2 = data['possibleVals2']
+        gammaVals3 = data['possibleVals3']
+        lossArr = data['allData']
+
+    # Scale of points
+    minLoss = np.min(lossArr)
+    maxLoss = np.max(lossArr)
+
+    xArr = np.zeros_like(lossArr)
+    yArr = np.zeros_like(lossArr)
+    zArr = np.zeros_like(lossArr)
+    sArr = np.zeros_like(lossArr)
+    for i in range(len(gammaVals1)):
+        for j in range(len(gammaVals2)):
+            for k in range(len(gammaVals3)):
+                xArr[i,j,k] = gammaVals1[i]
+                yArr[i,j,k] = gammaVals2[j]
+                zArr[i,j,k] = gammaVals3[k]
+                sArr[i,j,k] = 25*((1-(lossArr[i,j,k]-minLoss)/(maxLoss - minLoss))**5)
+
+    return lossArr, xArr, yArr, zArr, sArr
+
 ###################################################################################################################################
 
 ################################
@@ -193,8 +231,34 @@ def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', nam
 ###############################
 ### FIGURE 2: lossLandscape ###
 ###############################
-def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.0, fileType='.png', name='lossLandscape'):
-    print('TODO!')
+def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name='lossLandscape'):
+    lossArr, xArr, yArr, zArr, sArr = loadLossLandOrig()
+    xsPlus, xsMinus, ysPlus, ysMinus, zs = getLen5Order4Man()
+    box = np.array([[-0.5, 0.4], [-0.5, 0.4], [-0.5, 0.4]])
+    inBoxPlus = (box[0,0] < xsPlus) & (xsPlus < box[0,1]) & (box[1,0] < ysPlus) & (ysPlus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
+    inBoxMinus = (box[0,0] < xsMinus) & (xsMinus <box[0,1]) & (box[1,0] < ysMinus) & (ysMinus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
+
+    # Set up fig
+    plt.close('all')
+    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    ax = plt.axes(projection='3d')
+
+    img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
+    ax.scatter3D(xsPlus[inBoxPlus], ysPlus[inBoxPlus], zs[inBoxPlus], c='blue', label=r'$4^\mathrm{th}$ Order manifold')
+    ax.scatter3D(xsMinus[inBoxMinus], ysMinus[inBoxMinus], zs[inBoxMinus], c='pink', label=r'_$4^\mathrm{th}$ Order manifold')
+    ax.scatter3D(0.125, 0.25, 0.25, c='green', label=r'$4 \times$ Strang') # PolyStrang
+    ax.scatter3D(0.36266572103945605, -0.10032032403589856, -0.1352975465549758, c='red', label='Learn5A') # Learn5A
+
+    ax.set_xlabel(r'$\gamma_1$')
+    ax.set_ylabel(r'$\gamma_2$')
+    ax.set_zlabel(r'$\gamma_3$')
+    cbar = fig.colorbar(img, location='right', shrink=0.5, pad=0.04)
+    cbar.solids.set(alpha=1.0)
+    ax.legend(loc='upper right')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##############################
 ### FIGURE 3: loss2dPlanes ###
@@ -348,7 +412,7 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ### CALL PLOTS ###
 ##################
 plotParamTransform( 0.85, 2.0, '.png', 'paramTransform' )
-plotLossLandscape(  0.95, 1.0, '.png', 'lossLandscape'  )
+plotLossLandscape(  0.95, 1.2, '.png', 'lossLandscape'  )
 plotLoss2dPlanes(   0.80, 0.5, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.80, 2.0, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
