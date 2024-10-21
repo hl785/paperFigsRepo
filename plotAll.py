@@ -232,8 +232,8 @@ def loadLossConvOptions(path, timeRange=10):
     return [lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B], \
            [numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B]
 
-def loadLossLandOrig():
-    with np.load('lossLandOrig.npz') as data:
+def loadLossLand(path):
+    with np.load(path) as data:
         gammaVals1 = data['possibleVals1']
         gammaVals2 = data['possibleVals2']
         gammaVals3 = data['possibleVals3']
@@ -368,7 +368,7 @@ def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', nam
 ### FIGURE 2: lossLandscape ###
 ###############################
 def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name='lossLandscape'):
-    lossArr, xArr, yArr, zArr, sArr = loadLossLandOrig()
+    lossArr, xArr, yArr, zArr, sArr = loadLossLand('lossLandOrig.npz')
     xsPlus, xsMinus, ysPlus, ysMinus, zs = getLen5Order4Man()
     box = np.array([[-0.5, 0.4], [-0.5, 0.4], [-0.5, 0.4]])
     inBoxPlus = (box[0,0] < xsPlus) & (xsPlus < box[0,1]) & (box[1,0] < ysPlus) & (ysPlus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
@@ -718,13 +718,66 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
 ### FIGURE 8: lossLandGen ###
 #############################
 def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='lossLandGen'):
-    print('TODO!')
+    lossArr, xArr, yArr, zArr, sArr = loadLossLand('lossLandGen.npz')
+    xsPlus, xsMinus, ysPlus, ysMinus, zs = getLen5Order4Man()
+    box = np.array([[-0.5, 0.4], [-0.5, 0.4], [-0.5, 0.4]])
+    inBoxPlus = (box[0,0] < xsPlus) & (xsPlus < box[0,1]) & (box[1,0] < ysPlus) & (ysPlus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
+    inBoxMinus = (box[0,0] < xsMinus) & (xsMinus <box[0,1]) & (box[1,0] < ysMinus) & (ysMinus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1])
+    
+    # Set up fig
+    plt.close('all')
+    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    ax = plt.axes(projection='3d')
+
+    img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
+    ax.scatter3D(xsPlus[inBoxPlus], ysPlus[inBoxPlus], zs[inBoxPlus], c='blue', label=r'$4^\mathrm{th}$ Order manifold')
+    ax.scatter3D(xsMinus[inBoxMinus], ysMinus[inBoxMinus], zs[inBoxMinus], c='pink', label=r'_$4^\mathrm{th}$ Order manifold')
+    ax.scatter3D(0.125, 0.25, 0.25, c='green', label=r'$4 \times$ Strang') # PolyStrang
+    ax.scatter3D(0.36266572103945605, -0.10032032403589856, -0.1352975465549758, c='red', label='Learn5A') # Learn5A
+
+    ax.set_xlabel(r'$\gamma_1$')
+    ax.set_ylabel(r'$\gamma_2$')
+    ax.set_zlabel(r'$\gamma_3$')
+    cbar = fig.colorbar(img, location='right', shrink=0.5, pad=0.04)
+    cbar.solids.set(alpha=1.0)
+    ax.legend(loc='upper right')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##############################
 ### FIGURE 9: bestFitCoefs ###
 ##############################
 def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='bestFitCoefs'):
-    print('TODO!')
+    splitNames, losses, _, _, _, stepSizes = loadLossConvOrig()
+    splitColours = getSplitColours()
+    
+    # Set up fig
+    plt.close('all')
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    ax.set_xlabel(r'step size, $h$')
+    ax.set_ylabel(r'$L_2$ error')
+
+    learnedCoefs = [np.array([1.012819, 0.000100, 36.723808]), 
+                    np.array([0.161597, 0.186682, 17.520861]), 
+                    np.array([0.555560, 0.000150, 14.332067])]
+
+    for i, coefs in enumerate(learnedCoefs):
+        stepSize = stepSizes[3+i]
+        ax.loglog(stepSize, losses[3+i], splitColours[3+i], linestyle='', marker='+', alpha=1.0, label=splitNames[3+i])
+        lossPred = coefs[0]**2 * stepSize**2 + coefs[1]**2 * stepSize**4 + coefs[2]**2 * stepSize**6
+        labelStr = r'$y = {:.3f}h^2 + {:.3f}h^4 + {:.3f}h^4$'.format(coefs[0]**2, coefs[1]**2, coefs[2]**2)
+        ax.loglog(stepSize, lossPred, splitColours[3+i], linestyle='--', marker='', alpha=1.0, label=labelStr)
+
+    ax.legend(loc='best')
+    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+    ax.set_xscale('log')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##################################
 ### FIGURE 10: loss2dPlanesGen ###
