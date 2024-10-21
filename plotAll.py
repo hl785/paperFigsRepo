@@ -489,7 +489,42 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 ### FIGURE 5: lossConv ###
 ##########################
 def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv'):
-    print('TODO!')
+    splitNames, losses, numExps, lowQs, highQs, _ = loadLossConvOrig()
+    lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = losses
+
+    trotMin = np.argmin(lossTrot)
+    strangMin = np.argmin(lossStrang)
+    yoshMin = np.argmin(lossYosh)
+    learn5AMin = np.argmin(lossLearn5A)
+    learn8AMin = np.argmin(lossLearn8A)
+    learn8BMin = np.argmin(lossLearn8B)
+    minInds = [trotMin, strangMin, yoshMin, learn5AMin, learn8AMin, learn8BMin]
+
+    # Set up fig
+    plt.close('all')
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    ax.set_xlabel(r'number of exponentials')
+    ax.set_ylabel(r'func $L_2$ norm')
+
+    for i, splitCol in enumerate(getSplitColours()):
+        plotTo = minInds[i]+1
+        filtExps = numExps[i][:plotTo]
+        ax.loglog(filtExps, losses[i][:plotTo], splitCol, linestyle='-', marker='', alpha=1.0, label=splitNames[i])
+        ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.1)
+
+    ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity bound')
+    ax.loglog(numExps[0][-4:], 2*(losses[0][-1]/(numExps[0][-1]**-1.0)) * np.power(numExps[0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4 lines')
+    ax.loglog(numExps[1][-4:], 2*(losses[1][-1]/(numExps[1][-1]**-2.0)) * np.power(numExps[1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    ax.loglog(numExps[2][-4:], 2*(losses[2][-1]/(numExps[2][-1]**-4.0)) * np.power(numExps[2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+
+    ax.legend(loc='best')
+    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+    ax.set_xscale('log')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ############################
 ### FIGURE 6: lossRelAdv ###
