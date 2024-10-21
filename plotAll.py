@@ -29,10 +29,14 @@ def toFigSize(pageFracWidth, aspectRatio):
 def getDPI(fileType='.png'):
     return 'figure' if fileType == '.pdf' else 450
 
-def getSplitNames():
+def getSplitNames(incStrang4X = False):
+    if incStrang4X:
+        return ['Trotter', 'Strang', 'Yoshida', r'$4 \times$ Strang', 'Learn5A', 'Learn8A', 'Learn8B']
     return ['Trotter', 'Strang', 'Yoshida', 'Learn5A', 'Learn8A', 'Learn8B']
 
-def getSplitColours():
+def getSplitColours(incStrang4X = False):
+    if incStrang4X:
+        return ['mediumvioletred', 'firebrick', 'peru', 'sandybrown', 'forestgreen', 'royalblue', 'lightskyblue']
     return ['mediumvioletred', 'firebrick', 'peru', 'forestgreen', 'royalblue', 'lightskyblue']
 
 def paramTransform(gamma):
@@ -456,6 +460,7 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 
     gammas = [[], # Strang
               [0.6756035959798289, 1.3512071919596578], # Yoshida
+              [0.125, 0.25, 0.25], # 4X Strang
               [0.36266572103945605, -0.10032032403589856, -0.1352975465549758], # Learn5A
               [0.2134815929093979, -0.05820764895590353, 0.41253264535444745, -0.13523357389399546, 0.4443203153968813, -0.02509257759188356], # Learn8A
               [0.11775349336573762, 0.38763572759753917, 0.36597039590662095, 0.2921906385941626, 0.05641644544703187, -0.021241661286415584]] # Learn8B
@@ -468,8 +473,8 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
         alphas.append(alpha)
         betas.append(beta)
 
-    splitColours = getSplitColours()
-    for i, splitName in enumerate(getSplitNames()):
+    splitColours = getSplitColours(True)
+    for i, splitName in enumerate(getSplitNames(True)):
         pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName, 10.0)
 
     ax.legend(loc='best')
