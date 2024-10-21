@@ -11,6 +11,7 @@ plt.rcParams.update({
     "font.family": "serif",
     "text.latex.preamble": r"\usepackage{amsmath}"
 })
+from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 ###################################################################################################################################
@@ -190,6 +191,46 @@ def loadLossConvOrig():
            [lowQTrot, lowQStrang, lowQYosh, lowQLearn5A, lowQLearn8A, lowQLearn8B], \
            [highQTrot, highQStrang, highQYosh, highQLearn5A, highQLearn8A, highQLearn8B], \
            [stepSizeTrot, stepSizeStrang, stepSizeYosh, stepSizeLearn5A, stepSizeLearn8A, stepSizeLearn8B]
+
+def loadLossConvOptions(path, timeRange=10):
+    with np.load(path) as data:
+        unitNumStepsTrot   = data['unitNumStepsTrot']
+        unitNumStepsStrang = data['unitNumStepsStrang']
+        unitNumStepsYosh   = data['unitNumStepsYosh']
+
+        unitNumStepsGammaLearn5A = data['unitNumStepsGammaLearn3A']
+        unitNumStepsGammaLearn8A = data['unitNumStepsGammaLearn8A']
+        unitNumStepsGammaLearn8B = data['unitNumStepsGammaLearn8B']
+
+        lossTrotArr   = data['lossTrot'] 
+        lossStrangArr = data['lossStrang'] 
+        lossYoshArr   = data['lossYosh']
+
+        lossLearn5AArr = data['lossLearn3A'] 
+        lossLearn8AArr = data['lossLearn8A'] 
+        lossLearn8BArr = data['lossLearn8B']
+
+    # Number of Exponentials
+    # TODO: Get from data
+    numExpsTrot   =   unitNumStepsTrot*timeRange*(2 - 0) + 0
+    numExpsStrang = unitNumStepsStrang*timeRange*(4 - 2) + 1
+    numExpsYosh   =   unitNumStepsYosh*timeRange*(8 - 2) + 1
+
+    numExpsLearn5A = unitNumStepsGammaLearn5A*timeRange*(10 - 2) + 1
+    numExpsLearn8A = unitNumStepsGammaLearn8A*timeRange*(16 - 2) + 1
+    numExpsLearn8B = unitNumStepsGammaLearn8B*timeRange*(16 - 2) + 1
+
+    # Calc avg loss
+    lossTrot   = np.quantile(np.abs(lossTrotArr  ), 0.5, axis=0)
+    lossStrang = np.quantile(np.abs(lossStrangArr), 0.5, axis=0)
+    lossYosh   = np.quantile(np.abs(lossYoshArr  ), 0.5, axis=0)
+
+    lossLearn5A = np.quantile(np.abs(lossLearn5AArr), 0.5, axis=0)
+    lossLearn8A = np.quantile(np.abs(lossLearn8AArr), 0.5, axis=0)
+    lossLearn8B = np.quantile(np.abs(lossLearn8BArr), 0.5, axis=0)
+    
+    return [lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B], \
+           [numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B]
 
 def loadLossLandOrig():
     with np.load('lossLandOrig.npz') as data:
@@ -610,7 +651,68 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 ### FIGURE 7: lossConvGen ###
 #############################
 def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvGen'):
-    print('TODO!')
+    splitNames, origlosses, origNumExps, _, _, _ = loadLossConvOrig()
+    newPotlosses, newPotNumExps = loadLossConvOptions('lossConvNewPot.npz')
+    newAlllosses, newAllNumExps = loadLossConvOptions('lossConvAllNew.npz', 30)
+    losses = [origlosses, newPotlosses, newAlllosses]
+    numExps = [origNumExps, newPotNumExps, newAllNumExps]
+
+    # Set up fig
+    plt.close('all')
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True)
+    axs[0].set_xlabel(r'number of exponentials')
+    axs[1].set_xlabel(r'number of exponentials')
+    axs[0].set_ylabel(r'func $L_2$ norm')
+    axsList = [0, 0, 1]
+    linSty = ['-', '--', '-']
+
+    for i, loss in enumerate(losses):
+        lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = loss
+
+        trotMin = np.argmin(lossTrot)
+        strangMin = np.argmin(lossStrang)
+        yoshMin = np.argmin(lossYosh)
+        learn5AMin = np.argmin(lossLearn5A)
+        learn8AMin = np.argmin(lossLearn8A)
+        learn8BMin = np.argmin(lossLearn8B)
+        minInds = [trotMin, strangMin, yoshMin, learn5AMin, learn8AMin, learn8BMin]
+
+        for j, splitCol in enumerate(getSplitColours()):
+            plotTo = minInds[j]+1
+            axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
+    
+    axs[0].loglog(numExps[0][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5)
+    axs[0].loglog(numExps[0][0][-4:], 2*(losses[0][0][-1]/(numExps[0][0][-1]**-1.0)) * np.power(numExps[0][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    axs[0].loglog(numExps[0][1][-4:], 2*(losses[0][1][-1]/(numExps[0][1][-1]**-2.0)) * np.power(numExps[0][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    axs[0].loglog(numExps[0][2][-4:], 2*(losses[0][2][-1]/(numExps[0][2][-1]**-4.0)) * np.power(numExps[0][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    
+    axs[1].loglog(numExps[2][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity bound')
+    axs[1].loglog(numExps[2][0][-4:], 2*(losses[2][0][-1]/(numExps[2][0][-1]**-1.0)) * np.power(numExps[2][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4 lines')
+    axs[1].loglog(numExps[2][1][-4:], 2*(losses[2][1][-1]/(numExps[2][1][-1]**-2.0)) * np.power(numExps[2][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(numExps[2][2][-4:], 2*(losses[2][2][-1]/(numExps[2][2][-1]**-4.0)) * np.power(numExps[2][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+
+    # Auxiliary settings
+    handles, _ = axs[1].get_legend_handles_labels()
+    for i, splitCol in enumerate(getSplitColours()):
+        handle = mpatches.Patch(color=splitCol, label=splitNames[i])
+        handles.extend([handle])
+
+    handle1 = Line2D([0], [0], label='Principle Data', marker='', color='black', linestyle='-', alpha=0.5)
+    handle2 = Line2D([0], [0], label='Different Potential', marker='', color='black', linestyle='--', alpha=0.5)
+    handles.extend([handle1, handle2])
+    axs[1].legend(loc='best', handles=handles)
+
+    axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+    axs[0].set_xscale('log')
+
+    axs[1].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+    axs[1].set_xscale('log')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 #############################
 ### FIGURE 8: lossLandGen ###
