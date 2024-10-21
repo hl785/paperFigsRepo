@@ -428,7 +428,57 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
 ### FIGURE 4: splitVisLearn ###
 ###############################
 def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name='splitVisLearn'):
-    print('TODO!')
+    
+    def pipeLine(ax, alpha, beta, colour = 'grey', label = '', traceWidth = -1.0):
+        assert(len(alpha) == len(beta))
+        xs = np.array([0.0])
+        ys = np.array([0.0])
+
+        for i in range(len(alpha)):
+            newX = xs[-1] + alpha[i]
+            oldY = ys[-1]
+            newY = oldY + beta[i]
+            xs = np.append(xs, np.array([newX, newX]))
+            ys = np.append(ys, np.array([oldY, newY]))
+
+        ax.plot(xs, ys, color=colour, label=label)
+
+        if traceWidth > 0.0:
+          ax.plot(xs, ys, color=colour, alpha=0.2, lw=traceWidth)
+
+        return xs, ys
+
+    # Set up fig
+    plt.close('all')
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True)
+    ax.set_xlabel(r'Cumulative $\alpha$')
+    ax.set_ylabel(r'Cumulative $\beta$')
+
+    gammas = [[], # Strang
+              [0.6756035959798289, 1.3512071919596578], # Yoshida
+              [0.36266572103945605, -0.10032032403589856, -0.1352975465549758], # Learn5A
+              [0.2134815929093979, -0.05820764895590353, 0.41253264535444745, -0.13523357389399546, 0.4443203153968813, -0.02509257759188356], # Learn8A
+              [0.11775349336573762, 0.38763572759753917, 0.36597039590662095, 0.2921906385941626, 0.05641644544703187, -0.021241661286415584]] # Learn8B
+
+    alphas = [np.array([1.0])]  # Force add Trotter as not sym
+    betas = [np.array([1.0])]    # Force add Trotter as not sym
+
+    for gamma in gammas:
+        alpha, beta = paramTransform(np.array(gamma))
+        alphas.append(alpha)
+        betas.append(beta)
+
+    splitColours = getSplitColours()
+    for i, splitName in enumerate(getSplitNames()):
+        pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName, 10.0)
+
+    ax.legend(loc='best')
+    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##########################
 ### FIGURE 5: lossConv ###
