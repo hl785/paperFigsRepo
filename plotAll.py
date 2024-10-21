@@ -3,6 +3,7 @@
 ###############
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 plt.rcParams.update({
     "text.usetex": True,  # Use LaTeX for text rendering
@@ -86,6 +87,27 @@ def getLen5Order4Man():
     xsPlus = 1.0/6.0 - ysPlus*inter4
     xsMinus = 1.0/6.0 - ysMinus*inter4
     return xsPlus, xsMinus, ysPlus, ysMinus, zs
+
+def coordTransform(cent, p1, p2, x, y, z):
+    # vShift = v - alpha
+    xShift = x - cent[0]
+    yShift = y - cent[1]
+    zShift = z - cent[2]
+
+    # lambdai = np.dot(pi, vShift)
+    coordCand1 = p1[0] * xShift + p1[1] * yShift + p1[2] * zShift
+    coordCand2 = p2[0] * xShift + p2[1] * yShift + p2[2] * zShift
+
+    # lambda = np.linalg.inv(np.array([[1, np.dot(p1, p2)],[np.dot(p1, p2), 1]])) * lambda
+    scaleA = np.dot(p1, p2)
+    coord1 = coordCand1 - scaleA*coordCand2
+    coord2 = coordCand2 - scaleA*coordCand1
+
+    scaleB = 1.0/(1.0-scaleA*scaleA)
+    coord1 = scaleB * coord1
+    coord2 = scaleB * coord2
+
+    return coord1, coord2
 
 ###################################################################################################################################
 
@@ -190,6 +212,75 @@ def loadLossLandOrig():
 
     return lossArr, xArr, yArr, zArr, sArr
 
+def loadLand2dPlanesOrig():
+    allPSS = []
+    with np.load('loss2dPlanesData/polyStrangSlwDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allPSS = [xs, ys, zs, loss, cent, perp1, perp2]
+        
+    allPSM = []
+    with np.load('loss2dPlanesData/polyStrangMedDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allPSM = [xs, ys, zs, loss, cent, perp1, perp2]
+
+    allPSF = []
+    with np.load('loss2dPlanesData/polyStrangFstDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allPSF = [xs, ys, zs, loss, cent, perp1, perp2]
+
+    allLS = []
+    with np.load('loss2dPlanesData/learnedSlwDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allLS = [xs, ys, zs, loss, cent, perp1, perp2]
+
+    allLM = []
+    with np.load('loss2dPlanesData/learnedMedDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allLM = [xs, ys, zs, loss, cent, perp1, perp2]
+
+    allLF = []
+    with np.load('loss2dPlanesData/learnedFstDyn.npz') as data:
+        xs = data['xs']
+        ys = data['ys']
+        zs = data['zs']
+        loss = data['losses']
+        cent = data['cent']
+        perp1 = data['perp1']
+        perp2 = data['perp2']
+        allLF = [xs, ys, zs, loss, cent, perp1, perp2]
+    
+    return allPSS, allPSM, allPSF, allLS, allLM, allLF
+
 ###################################################################################################################################
 
 ################################
@@ -263,8 +354,75 @@ def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name
 ##############################
 ### FIGURE 3: loss2dPlanes ###
 ##############################
-def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=0.5, fileType='.png', name='loss2dPlanes'):
-    print('TODO!')
+def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='loss2dPlanes'):
+    allPSS, allPSM, allPSF, allLS, allLM, allLF = loadLand2dPlanesOrig()
+
+    def addSlice(x, y, loss, ax):
+        cPlot = ax.contourf(x, y, loss, cmap = cmapComp, norm = normalizerComp, alpha=0.2, antialiased=True)
+        cPlot = ax.contour(x, y, loss, alpha=1.0, colors='grey')
+        ax.clabel(cPlot, inline=True)
+
+    def pipeLine(allData, ax):
+        xs, ys, zs, loss, cent, perp1, perp2 = allData
+        lambda1, lambda2 = coordTransform(cent, perp1, perp2, xs, ys, zs)
+        addSlice(lambda1, lambda2, loss, ax)
+
+    plt.close('all')
+    fig, axs = plt.subplots(3, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
+
+    minVal = np.min(np.array([
+             np.min(allPSS[3]),
+             np.min(allPSM[3]),
+             np.min(allPSF[3]),
+             np.min(allLS[3]),
+             np.min(allLM[3]),
+             np.min(allLF[3])
+    ]))
+
+    maxVal = np.max(np.array([
+             np.max(allPSS[3]),
+             np.max(allPSM[3]),
+             np.max(allPSF[3]),
+             np.max(allLS[3]),
+             np.max(allLM[3]),
+             np.max(allLF[3])
+    ]))
+
+    cmapComp='bwr'
+    normalizerComp=matplotlib.colors.Normalize(minVal, maxVal)
+    imComp=matplotlib.cm.ScalarMappable(norm=normalizerComp, cmap = cmapComp)
+
+    pipeLine(allPSS, axs[0,0])
+    pipeLine(allPSM, axs[1,0])
+    pipeLine(allPSF, axs[2,0])
+
+    pipeLine(allLS, axs[0,1])
+    pipeLine(allLM, axs[1,1])
+    pipeLine(allLF, axs[2,1])
+
+    cols = [r'$[0.125, 0.25, 0.25]$', r'$[0.3314, -0.07304, -0.1821]$']
+    for ax, col in zip(axs[0], cols):
+        ax.set_title(col)
+
+    xLabels = [r'$e_2$', r'$e_1$', r'$e_1$']
+    yLabels = [r'$e_3$', r'$e_3$', r'$e_2$']
+    speeds = [r'Slow Dyn', r'Med Dyn', r'Fast Dyn']
+    for i in range(len(axs)):
+        axs[i,0].set_xlabel(xLabels[i])
+        axs[i,0].set_ylabel(yLabels[i])
+        axs[i,1].set_xlabel(xLabels[i])
+        axs[i,1].set_ylabel(yLabels[i])
+        tempAx = axs[i,1].twinx()
+        # tempAx.set_ylabel(speeds[i], size='large')
+        tempAx.set_ylabel(speeds[i])
+        tempAx.set_yticks([])
+
+    cbar = fig.colorbar(imComp, ax=axs)
+    cbar.solids.set(alpha=0.2)
+    
+    # plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ###############################
 ### FIGURE 4: splitVisLearn ###
@@ -379,7 +537,7 @@ def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
 ##################################
 ### FIGURE 10: loss2dPlanesGen ###
 ##################################
-def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=0.5, fileType='.png', name='loss2dPlanesGen'):
+def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='loss2dPlanesGen'):
     print('TODO!')
 
 ###############################
@@ -413,14 +571,14 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ##################
 plotParamTransform( 0.85, 2.0, '.png', 'paramTransform' )
 plotLossLandscape(  0.95, 1.2, '.png', 'lossLandscape'  )
-plotLoss2dPlanes(   0.80, 0.5, '.png', 'loss2dPlanes'   )
+plotLoss2dPlanes(   0.80, 1.0, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.80, 2.0, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
 plotLossRelAdv(     0.85, 1.7, '.png', 'lossRelAdv'     )
 plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
 plotLossLandGen(    0.66, 1.0, '.png', 'lossLandGen'    )
 plotBestFitCoefs(   0.85, 2.0, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.80, 0.5, '.png', 'loss2dPlanesGen')
+plotLoss2dPlanesGen(0.80, 1.0, '.png', 'loss2dPlanesGen')
 plotLossConvProj(   0.85, 2.0, '.png', 'lossConvProj'   )
 plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
 plotParamOptim(     0.85, 2.0, '.png', 'paramOptim'     )
