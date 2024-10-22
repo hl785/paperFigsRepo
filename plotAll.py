@@ -120,7 +120,7 @@ def coordTransform(cent, p1, p2, x, y, z):
 ### LOAD DATA ###
 #################
 def loadLossConvOrig():
-    with np.load('lossConvOrig.npz') as data:
+    with np.load('data/lossConvOrig.npz') as data:
         unitNumStepsTrot   = data['unitNumStepsTrot']
         unitNumStepsStrang = data['unitNumStepsStrang']
         unitNumStepsYosh   = data['unitNumStepsYosh']
@@ -368,7 +368,7 @@ def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', nam
 ### FIGURE 2: lossLandscape ###
 ###############################
 def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name='lossLandscape'):
-    lossArr, xArr, yArr, zArr, sArr = loadLossLand('lossLandOrig.npz')
+    lossArr, xArr, yArr, zArr, sArr = loadLossLand('data/lossLandOrig.npz')
     xsPlus, xsMinus, ysPlus, ysMinus, zs = getLen5Order4Man()
     box = np.array([[-0.5, 0.4], [-0.5, 0.4], [-0.5, 0.4]])
     inBoxPlus = (box[0,0] < xsPlus) & (xsPlus < box[0,1]) & (box[1,0] < ysPlus) & (ysPlus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
@@ -400,7 +400,7 @@ def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name
 ### FIGURE 3: loss2dPlanes ###
 ##############################
 def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='loss2dPlanes'):
-    allPSS, allPSM, allPSF, allLS, allLM, allLF = loadLand2dPlanes('loss2dPlanesData')
+    allPSS, allPSM, allPSF, allLS, allLM, allLF = loadLand2dPlanes('data/loss2dPlanesData')
 
     def addSlice(x, y, loss, ax):
         cPlot = ax.contourf(x, y, loss, cmap = cmapComp, norm = normalizerComp, alpha=0.2, antialiased=True)
@@ -652,8 +652,8 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 #############################
 def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvGen'):
     splitNames, origlosses, origNumExps, _, _, _ = loadLossConvOrig()
-    newPotlosses, newPotNumExps = loadLossConvOptions('lossConvNewPot.npz')
-    newAlllosses, newAllNumExps = loadLossConvOptions('lossConvAllNew.npz', 30)
+    newPotlosses, newPotNumExps = loadLossConvOptions('data/lossConvNewPot.npz')
+    newAlllosses, newAllNumExps = loadLossConvOptions('data/lossConvAllNew.npz', 30)
     losses = [origlosses, newPotlosses, newAlllosses]
     numExps = [origNumExps, newPotNumExps, newAllNumExps]
 
@@ -718,7 +718,7 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
 ### FIGURE 8: lossLandGen ###
 #############################
 def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='lossLandGen'):
-    lossArr, xArr, yArr, zArr, sArr = loadLossLand('lossLandGen.npz')
+    lossArr, xArr, yArr, zArr, sArr = loadLossLand('data/lossLandGen.npz')
     xsPlus, xsMinus, ysPlus, ysMinus, zs = getLen5Order4Man()
     box = np.array([[-0.5, 0.4], [-0.5, 0.4], [-0.5, 0.4]])
     inBoxPlus = (box[0,0] < xsPlus) & (xsPlus < box[0,1]) & (box[1,0] < ysPlus) & (ysPlus < box[1,1]) & (box[2,0] < zs) & (zs < box[2,1]) 
@@ -783,7 +783,7 @@ def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
 ### FIGURE 10: loss2dPlanesGen ###
 ##################################
 def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='loss2dPlanesGen'):
-    allPSS, allPSM, allPSF, allLS, allLM, allLF = loadLand2dPlanes('loss2dPlanesGenData', 'ordCondErr')
+    allPSS, allPSM, allPSF, allLS, allLM, allLF = loadLand2dPlanes('data/loss2dPlanesGenData', 'ordCondErr')
 
     def addSlice(x, y, loss, ax):
         cPlot = ax.contourf(x, y, loss, cmap = cmapComp, norm = normalizerComp, alpha=0.2, antialiased=True)
@@ -880,27 +880,27 @@ def plotLossConvProj(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
     ax.set_xlabel(r'number of exponentials')
     ax.set_ylabel(r'func $L_2$ norm')
 
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps1', 'lossLearn1')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps2', 'lossLearn2')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps3', 'lossLearn3')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps4', 'lossLearn4')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps5', 'lossLearn5')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps6', 'lossLearn6')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps7', 'lossLearn7')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps8', 'lossLearn8')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps9', 'lossLearn9')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps10', 'lossLearn10')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps11', 'lossLearn11')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps12', 'lossLearn12')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps13', 'lossLearn13')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps14', 'lossLearn14')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps15', 'lossLearn15')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps16', 'lossLearn16')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps17', 'lossLearn17')
-    pipeLine(ax, 'lossConvOrig.npz', 'unitNumStepsYosh', 'lossYosh', 'peru', 'Yoshida', True)
-    pipeLine(ax, 'lossConvOrig.npz', 'unitNumStepsGammaLearn3A', 'lossLearn3A', 'forestgreen', 'Learn5A')
-    pipeLine(ax, 'lossConvProj.npz', 'unitNumStepsGammaLearn3AProj', 'lossLearn3AProj', 'lime', 'Learn5aProj')
-    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps18', 'lossLearn18', label = 'Other 4th Ord')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps1', 'lossLearn1')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps2', 'lossLearn2')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps3', 'lossLearn3')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps4', 'lossLearn4')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps5', 'lossLearn5')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps6', 'lossLearn6')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps7', 'lossLearn7')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps8', 'lossLearn8')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps9', 'lossLearn9')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps10', 'lossLearn10')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps11', 'lossLearn11')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps12', 'lossLearn12')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps13', 'lossLearn13')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps14', 'lossLearn14')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps15', 'lossLearn15')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps16', 'lossLearn16')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps17', 'lossLearn17')
+    pipeLine(ax, 'data/lossConvOrig.npz', 'unitNumStepsYosh', 'lossYosh', 'peru', 'Yoshida', True)
+    pipeLine(ax, 'data/lossConvOrig.npz', 'unitNumStepsGammaLearn3A', 'lossLearn3A', 'forestgreen', 'Learn5A')
+    pipeLine(ax, 'data/lossConvProj.npz', 'unitNumStepsGammaLearn3AProj', 'lossLearn3AProj', 'lime', 'Learn5aProj')
+    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps18', 'lossLearn18', label = 'Other 4th Ord')
 
     ax.legend(loc='best')
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
