@@ -856,7 +856,60 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
 ### FIGURE 11: lossConvProj ###
 ###############################
 def plotLossConvProj(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvProj'):
-    print('TODO!')
+
+    def pipeLine(ax, file, numStepsName, lossName, colour = 'grey', label = '', isYosh=False):
+        with np.load(file) as data:
+            unitNumSteps = data[numStepsName]
+            losses = data[lossName]
+
+        # TODO: Get from data
+        timeRange = 10
+        numExps = unitNumSteps*timeRange*(10 - 2) + 1 if not isYosh else unitNumSteps*timeRange*(8 - 2) + 1
+
+        # Calc avg loss
+        loss = np.quantile(np.abs(losses), 0.5, axis=0)
+        minInd = np.argmin(loss)
+
+        # Plot data
+        lineStyle = '-'
+        ax.loglog(numExps[:minInd+1], loss[:minInd+1], colour , linestyle=lineStyle, marker='', alpha=1.0, label=label)
+
+    # Set up fig
+    plt.close('all')
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    ax.set_xlabel(r'number of exponentials')
+    ax.set_ylabel(r'func $L_2$ norm')
+
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps1', 'lossLearn1')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps2', 'lossLearn2')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps3', 'lossLearn3')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps4', 'lossLearn4')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps5', 'lossLearn5')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps6', 'lossLearn6')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps7', 'lossLearn7')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps8', 'lossLearn8')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps9', 'lossLearn9')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps10', 'lossLearn10')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps11', 'lossLearn11')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps12', 'lossLearn12')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps13', 'lossLearn13')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps14', 'lossLearn14')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps15', 'lossLearn15')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps16', 'lossLearn16')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps17', 'lossLearn17')
+    pipeLine(ax, 'lossConvOrig.npz', 'unitNumStepsYosh', 'lossYosh', 'peru', 'Yoshida', True)
+    pipeLine(ax, 'lossConvOrig.npz', 'unitNumStepsGammaLearn3A', 'lossLearn3A', 'forestgreen', 'Learn5A')
+    pipeLine(ax, 'lossConvProj.npz', 'unitNumStepsGammaLearn3AProj', 'lossLearn3AProj', 'lime', 'Learn5aProj')
+    pipeLine(ax, 'lossConv4thOrd.npz', 'unitNumSteps18', 'lossLearn18', label = 'Other 4th Ord')
+
+    ax.legend(loc='best')
+    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+    ax.set_xscale('log')
+
+    plt.tight_layout()
+    # plt.show()
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##################################
 ### FIGURE 12: sampleInitConds ###
