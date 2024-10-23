@@ -622,66 +622,6 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     yosh8AMin = np.argmin(ratioYosh8A)
     yosh8BMin = np.argmin(ratioYosh8B)
 
-    # maxInd = np.argmax(ratioAll)
-    # print(f'The maximum relative advantage {ratioAll[maxInd]:.3f} is found at numExps = {numExpsCommon[maxInd]:.0f}')
-    # print(f'Loss of Trot at maximum relative advantage is {lossTrotCommon[maxInd]:.8f}')
-    # print(f'Loss of Strang at maximum relative advantage is {lossStrangCommon[maxInd]:.8f}')
-    # print(f'Loss of Yosh at maximum relative advantage is {lossYoshCommon[maxInd]:.8f}')
-    # print(f'Loss of Learn5A at maximum relative advantage is {lossLearn5ACommon[maxInd]:.8f}')
-    # print(f'Loss of Learn8A at maximum relative advantage is {lossLearn8ACommon[maxInd]:.8f}')
-    # print(f'Loss of Learn8B at maximum relative advantage is {lossLearn8BCommon[maxInd]:.8f}')
-
-    # print(f'Relative accuracy of Trot vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossTrotCommon[maxInd]:.3f}')
-    # print(f'Relative accuracy of Strang vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossStrangCommon[maxInd]:.3f}')
-    # print(f'Relative accuracy of Yosh vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossYoshCommon[maxInd]:.3f}')
-    # print(f'Relative accuracy of Learn5A vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossLearn5ACommon[maxInd]:.3f}')
-    # print(f'Relative accuracy of Learn8A vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossLearn8ACommon[maxInd]:.3f}')
-    # print(f'Relative accuracy of Learn8B vs Yosh at maximum relative advantage is {lossYoshCommon[maxInd]/lossLearn8BCommon[maxInd]:.3f}')
-
-    # print(f'Relative speed of Trot vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossTrotCommon[maxInd]):.3f}')
-    # print(f'Relative speed of Strang vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossStrangCommon[maxInd]):.3f}')
-    # print(f'Relative speed of Yosh vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossYoshCommon[maxInd]):.3f}')
-    # print(f'Relative speed of Learn5A vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossLearn5ACommon[maxInd]):.3f}')
-    # print(f'Relative speed of Learn8A vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossLearn8ACommon[maxInd]):.3f}')
-    # print(f'Relative speed of Learn8B vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossLearn8BCommon[maxInd]):.3f}')
-    
-    # maxInd = np.argmax(ratioAll)
-    # lossTrot    =    lossTrotCommon[maxInd]
-    # lossStrang  =  lossStrangCommon[maxInd]
-    # lossYosh    =    lossYoshCommon[maxInd]
-    # lossLearn5A = lossLearn5ACommon[maxInd]
-    # lossLearn8A = lossLearn8ACommon[maxInd]
-    # lossLearn8B = lossLearn8BCommon[maxInd]
-
-    # indMinTrot    = np.argmin(np.abs(lossYoshCommon - lossTrot   ))
-    # indMinStrang  = np.argmin(np.abs(lossYoshCommon - lossStrang ))
-    # indMinYosh    = np.argmin(np.abs(lossYoshCommon - lossYosh   ))
-    # indMinLearn5A = np.argmin(np.abs(lossYoshCommon - lossLearn5A))
-    # indMinLearn8A = np.argmin(np.abs(lossYoshCommon - lossLearn8A))
-    # indMinLearn8B = np.argmin(np.abs(lossYoshCommon - lossLearn8B))
-
-    # print(maxInd)
-    # print(indMinTrot)   
-    # print(indMinStrang) 
-    # print(indMinYosh)   
-    # print(indMinLearn5A)
-    # print(indMinLearn8A)
-    # print(indMinLearn8B)
-
-    # print(numExpsCommon[indMinTrot   ])
-    # print(numExpsCommon[indMinStrang ])
-    # print(numExpsCommon[indMinYosh   ])
-    # print(numExpsCommon[indMinLearn5A])
-    # print(numExpsCommon[indMinLearn8A])
-    # print(numExpsCommon[indMinLearn8B])
-
-    # print(f'{numExpsCommon[indMinTrot   ]/numExpsCommon[maxInd]:0.2f}')
-    # print(f'{numExpsCommon[indMinStrang ]/numExpsCommon[maxInd]:0.2f}')
-    # print(f'{numExpsCommon[indMinYosh   ]/numExpsCommon[maxInd]:0.2f}')
-    # print(f'{numExpsCommon[indMinLearn5A]/numExpsCommon[maxInd]:0.2f}')
-    # print(f'{numExpsCommon[indMinLearn8A]/numExpsCommon[maxInd]:0.2f}')
-    # print(f'{numExpsCommon[indMinLearn8B]/numExpsCommon[maxInd]:0.2f}')
-
     # Set up fig
     plt.close('all')
     fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
