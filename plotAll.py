@@ -7,7 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 plt.rcParams.update({
     "text.usetex": True,  # Use LaTeX for text rendering
-    "font.size": 12,      # Match LaTeX font size
+    "font.size": 10,      # Match LaTeX font size
     "font.family": "serif",
     "text.latex.preamble": r"\usepackage{amsmath}"
 })
@@ -21,7 +21,7 @@ import matplotlib.patches as mpatches
 ###############
 def toFigSize(pageFracWidth, aspectRatio):
     # A4 around 6.5 inches for \textwidth, check as some say 5.125 but looks worse.
-    textwidth = 6.5
+    textwidth = 7.5
     figWidthInches = textwidth * pageFracWidth
     figHeightInches = figWidthInches / aspectRatio
     # Return in form x, y
@@ -326,6 +326,13 @@ def loadLand2dPlanes(path, name='losses'):
     
     return allPSS, allPSM, allPSF, allLS, allLM, allLF
 
+def loadIvpRefs(path):
+    with np.load(path) as data:
+        uInitsVal = data['uInitsVal']
+        uFinalRefVal = data['uFinalRefVal']
+
+    return uInitsVal, uFinalRefVal
+
 ###################################################################################################################################
 
 ################################
@@ -517,8 +524,10 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
     splitColours = getSplitColours(True)
     for i, splitName in enumerate(getSplitNames(True)):
         pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName, 10.0)
+    
+    ax.plot(np.array([0.0, 1.0]), np.array([0.0, 1.0]), color='grey', label='Exact Sol', zorder=0)
 
-    ax.legend(loc='best')
+    ax.legend(loc='center', ncols=1, bbox_to_anchor=(-0.35, 0.5))
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
 
@@ -551,14 +560,28 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
         plotTo = minInds[i]+1
         filtExps = numExps[i][:plotTo]
         ax.loglog(filtExps, losses[i][:plotTo], splitCol, linestyle='-', marker='', alpha=1.0, label=splitNames[i])
-        ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.1)
+        ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.2, linewidth=0)
+    
+    # Hach in Learn5AProj
+    with np.load('data/lossConvProj.npz') as data:
+        unitNumStepsLearn5AProj = data['unitNumStepsGammaLearn3AProj']
+        lossesLearn5AProj = data['lossLearn3AProj']
+    numExpsLearn5AProj = unitNumStepsLearn5AProj*10*(10 - 2) + 1
+    lossLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5, axis=0)
+    learn5AProjMin = np.argmin(lossLearn5AProj)
+    plotTo = learn5AProjMin+1
+    stdDev1 = 0.341
+    lowQLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5 - stdDev1, axis=0)
+    highQLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5 + stdDev1, axis=0)
+    ax.loglog(numExpsLearn5AProj[:plotTo], lossLearn5AProj[:plotTo], 'lime', linestyle='-', marker='', alpha=1.0, label='Learn5AProj', zorder=0)
+    ax.fill_between(numExpsLearn5AProj[:plotTo], lowQLearn5AProj[:plotTo], highQLearn5AProj[:plotTo], color='lime', alpha=0.2, linewidth=0, zorder=0)
 
-    ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity bound')
-    ax.loglog(numExps[0][-4:], 2*(losses[0][-1]/(numExps[0][-1]**-1.0)) * np.power(numExps[0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4 lines')
+    ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
+    ax.loglog(numExps[0][-4:], 2*(losses[0][-1]/(numExps[0][-1]**-1.0)) * np.power(numExps[0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
     ax.loglog(numExps[1][-4:], 2*(losses[1][-1]/(numExps[1][-1]**-2.0)) * np.power(numExps[1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
     ax.loglog(numExps[2][-4:], 2*(losses[2][-1]/(numExps[2][-1]**-4.0)) * np.power(numExps[2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
 
-    ax.legend(loc='best')
+    ax.legend(loc='best', ncols=3)
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
@@ -681,26 +704,28 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
             plotTo = minInds[j]+1
             axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
     
-    axs[0].loglog(numExps[0][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5)
-    axs[0].loglog(numExps[0][0][-4:], 2*(losses[0][0][-1]/(numExps[0][0][-1]**-1.0)) * np.power(numExps[0][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    axs[0].loglog(numExps[0][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
+    axs[0].loglog(numExps[0][0][-4:], 2*(losses[0][0][-1]/(numExps[0][0][-1]**-1.0)) * np.power(numExps[0][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
     axs[0].loglog(numExps[0][1][-4:], 2*(losses[0][1][-1]/(numExps[0][1][-1]**-2.0)) * np.power(numExps[0][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
     axs[0].loglog(numExps[0][2][-4:], 2*(losses[0][2][-1]/(numExps[0][2][-1]**-4.0)) * np.power(numExps[0][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
     
-    axs[1].loglog(numExps[2][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity bound')
-    axs[1].loglog(numExps[2][0][-4:], 2*(losses[2][0][-1]/(numExps[2][0][-1]**-1.0)) * np.power(numExps[2][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4 lines')
+    axs[1].loglog(numExps[2][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5)
+    axs[1].loglog(numExps[2][0][-4:], 2*(losses[2][0][-1]/(numExps[2][0][-1]**-1.0)) * np.power(numExps[2][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5)
     axs[1].loglog(numExps[2][1][-4:], 2*(losses[2][1][-1]/(numExps[2][1][-1]**-2.0)) * np.power(numExps[2][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
     axs[1].loglog(numExps[2][2][-4:], 2*(losses[2][2][-1]/(numExps[2][2][-1]**-4.0)) * np.power(numExps[2][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
 
     # Auxiliary settings
+    handles, _ = axs[0].get_legend_handles_labels()
+    handle1 = Line2D([0], [0], label='Training set up', marker='', color='black', linestyle='-', alpha=0.5)
+    handle2 = Line2D([0], [0], label='Different potential', marker='', color='black', linestyle='--', alpha=0.5)
+    handles.extend([handle1, handle2])
+    axs[0].legend(loc='best', handles=handles)
+
     handles, _ = axs[1].get_legend_handles_labels()
     for i, splitCol in enumerate(getSplitColours()):
         handle = mpatches.Patch(color=splitCol, label=splitNames[i])
         handles.extend([handle])
-
-    handle1 = Line2D([0], [0], label='Principle Data', marker='', color='black', linestyle='-', alpha=0.5)
-    handle2 = Line2D([0], [0], label='Different Potential', marker='', color='black', linestyle='--', alpha=0.5)
-    handles.extend([handle1, handle2])
-    axs[1].legend(loc='best', handles=handles)
+    axs[1].legend(loc='best', handles=handles, ncols=2)
 
     axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
     axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
@@ -767,10 +792,11 @@ def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
         stepSize = stepSizes[3+i]
         ax.loglog(stepSize, losses[3+i], splitColours[3+i], linestyle='', marker='+', alpha=1.0, label=splitNames[3+i])
         lossPred = coefs[0]**2 * stepSize**2 + coefs[1]**2 * stepSize**4 + coefs[2]**2 * stepSize**6
-        labelStr = r'$y = {:.3f}h^2 + {:.3f}h^4 + {:.3f}h^4$'.format(coefs[0]**2, coefs[1]**2, coefs[2]**2)
+        labelStr = r'$y = {:.3f}h^2 + {:.3f}h^4 + {:.1f}h^6$'.format(coefs[0]**2, coefs[1]**2, coefs[2]**2)
         ax.loglog(stepSize, lossPred, splitColours[3+i], linestyle='--', marker='', alpha=1.0, label=labelStr)
 
-    ax.legend(loc='best')
+    handles, _ = ax.get_legend_handles_labels()
+    ax.legend(loc='best', ncols=2, handles=handles[0::2]+handles[1::2])
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
@@ -852,79 +878,43 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
     # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
-###############################
-### FIGURE 11: lossConvProj ###
-###############################
-def plotLossConvProj(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvProj'):
-
-    def pipeLine(ax, file, numStepsName, lossName, colour = 'grey', label = '', isYosh=False):
-        with np.load(file) as data:
-            unitNumSteps = data[numStepsName]
-            losses = data[lossName]
-
-        # TODO: Get from data
-        timeRange = 10
-        numExps = unitNumSteps*timeRange*(10 - 2) + 1 if not isYosh else unitNumSteps*timeRange*(8 - 2) + 1
-
-        # Calc avg loss
-        loss = np.quantile(np.abs(losses), 0.5, axis=0)
-        minInd = np.argmin(loss)
-
-        # Plot data
-        lineStyle = '-'
-        ax.loglog(numExps[:minInd+1], loss[:minInd+1], colour , linestyle=lineStyle, marker='', alpha=1.0, label=label)
-
-    # Set up fig
-    plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
-    ax.set_xlabel(r'number of exponentials')
-    ax.set_ylabel(r'func $L_2$ norm')
-
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps1', 'lossLearn1')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps2', 'lossLearn2')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps3', 'lossLearn3')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps4', 'lossLearn4')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps5', 'lossLearn5')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps6', 'lossLearn6')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps7', 'lossLearn7')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps8', 'lossLearn8')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps9', 'lossLearn9')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps10', 'lossLearn10')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps11', 'lossLearn11')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps12', 'lossLearn12')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps13', 'lossLearn13')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps14', 'lossLearn14')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps15', 'lossLearn15')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps16', 'lossLearn16')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps17', 'lossLearn17')
-    pipeLine(ax, 'data/lossConvOrig.npz', 'unitNumStepsYosh', 'lossYosh', 'peru', 'Yoshida', True)
-    pipeLine(ax, 'data/lossConvOrig.npz', 'unitNumStepsGammaLearn3A', 'lossLearn3A', 'forestgreen', 'Learn5A')
-    pipeLine(ax, 'data/lossConvProj.npz', 'unitNumStepsGammaLearn3AProj', 'lossLearn3AProj', 'lime', 'Learn5aProj')
-    pipeLine(ax, 'data/lossConv4thOrd.npz', 'unitNumSteps18', 'lossLearn18', label = 'Other 4th Ord')
-
-    ax.legend(loc='best')
-    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
-    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
-    ax.set_xscale('log')
-
-    plt.tight_layout()
-    # plt.show()
-    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
-
 ##################################
-### FIGURE 12: sampleInitConds ###
+### FIGURE 11: sampleInitConds ###
 ##################################
 def plotSampleInitConds(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='sampleInitConds'):
     print('TODO!')
+    # uInitsVal, uFinalRefVal = loadIvpRefs('data/ivpRefsOrig.npz')
+
+    # def pipeLine(ax, xGrid, uInit, pot, showAx2 = False):
+    #     xGrid = np.array(xGrid)
+    #     uInit = np.array(uInit)
+
+    #     handle1 = ax.plot(xGrid, np.abs(uInit), 'k', label='Mod')
+    #     handle2 = ax.plot(xGrid, np.real(uInit), 'b', label='Real')
+    #     handle3 = ax.plot(xGrid, np.imag(uInit), 'r', label='Imag')
+    #     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+    #     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+
+    #     ax2 = ax.twinx()
+    #     ax2.set_yscale('log')
+    #     if showAx2:
+    #         ax2.set_ylabel('Potential')
+    #     else:
+    #         ax2.set_yticklabels([])
+
+    #     handle4 = ax2.plot(xGrid, pot - min(pot) + 1, color='yellow', alpha=0.5, label='Potential')
+    #     ax2.fill_between(xGrid, pot - min(pot) + 1, 0, color='yellow', alpha=0.1)
+
+    #     return handle1, handle2, handle3, handle4
 
 #############################
-### FIGURE 13: paramOptim ###
+### FIGURE 12: paramOptim ###
 #############################
 def plotParamOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='paramOptim'):
     print('TODO!')
 
 ############################
-### FIGURE 14: allOptims ###
+### FIGURE 13: allOptims ###
 ############################
 def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='allOptims'):
     print('TODO!')
@@ -934,17 +924,16 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ##################
 ### CALL PLOTS ###
 ##################
-plotParamTransform( 0.85, 2.0, '.png', 'paramTransform' )
-plotLossLandscape(  0.95, 1.2, '.png', 'lossLandscape'  )
-plotLoss2dPlanes(   0.80, 1.0, '.png', 'loss2dPlanes'   )
-plotSplitVisLearn(  0.80, 2.0, '.png', 'splitVisLearn'  )
+plotParamTransform( 0.85, 4.0, '.png', 'paramTransform' )
+plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
+plotLoss2dPlanes(   0.85, 1.0, '.png', 'loss2dPlanes'   )
+plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
-plotLossRelAdv(     0.85, 1.7, '.png', 'lossRelAdv'     )
+plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
 plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
-plotLossLandGen(    0.66, 1.0, '.png', 'lossLandGen'    )
-plotBestFitCoefs(   0.85, 2.0, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.80, 1.0, '.png', 'loss2dPlanesGen')
-plotLossConvProj(   0.85, 2.0, '.png', 'lossConvProj'   )
+plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
+plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
+plotLoss2dPlanesGen(0.85, 1.0, '.png', 'loss2dPlanesGen')
 plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
 plotParamOptim(     0.85, 2.0, '.png', 'paramOptim'     )
 plotAllOptims(      0.85, 2.0, '.png', 'allOptims'      )
