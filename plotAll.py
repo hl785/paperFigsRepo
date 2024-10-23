@@ -328,10 +328,12 @@ def loadLand2dPlanes(path, name='losses'):
 
 def loadIvpRefs(path):
     with np.load(path) as data:
+        pot = data['pot']
+        xGrid = data['xGrid']
         uInitsVal = data['uInitsVal']
         uFinalRefVal = data['uFinalRefVal']
 
-    return uInitsVal, uFinalRefVal
+    return pot, xGrid, uInitsVal, uFinalRefVal
 
 ###################################################################################################################################
 
@@ -340,7 +342,7 @@ def loadIvpRefs(path):
 ################################
 def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='paramTransform'):
     plt.close('all')
-    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True)
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True, layout='constrained')
     axs[0].set_ylabel('Parameter Value')
     
     gammas = [np.array([0.4, 0.075, 0.3]), np.array([0.2, 0.3])]
@@ -364,10 +366,8 @@ def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', nam
     
     handle1 = mpatches.Patch(facecolor='white', hatch=r'\\', label='Consistency')
     handle2 = mpatches.Patch(facecolor='white', hatch=r'//', label='Symmetry')
-    axs[1].legend(handles = [handle1]+[handle2], loc='best')
+    axs[1].legend(handles = [handle1]+[handle2], loc='lower right', framealpha=1.0)
     
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 
@@ -383,7 +383,7 @@ def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name
 
     # Set up fig
     plt.close('all')
-    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     ax = plt.axes(projection='3d')
 
     img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
@@ -399,8 +399,6 @@ def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name
     cbar.solids.set(alpha=1.0)
     ax.legend(loc='upper right')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##############################
@@ -420,7 +418,7 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
         addSlice(lambda1, lambda2, loss, ax)
 
     plt.close('all')
-    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
+    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained', sharex=True, sharey=True)
 
     minVal = np.min(np.array([
              np.min(allPSS[3]),
@@ -472,8 +470,6 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
     cbar = fig.colorbar(imComp, ax=axs)
     cbar.solids.set(alpha=0.2)
     
-    # plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ###############################
@@ -502,9 +498,9 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 
     # Set up fig
     plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True)
-    ax.set_xlabel(r'Cumulative $\alpha$')
-    ax.set_ylabel(r'Cumulative $\beta$')
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True, layout='constrained')
+    ax.set_xlabel(r'$u_1(t)$')
+    ax.set_ylabel(r'$u_2(t)$')
 
     gammas = [[], # Strang
               [0.6756035959798289, 1.3512071919596578], # Yoshida
@@ -527,12 +523,10 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
     
     ax.plot(np.array([0.0, 1.0]), np.array([0.0, 1.0]), color='grey', label='Exact Sol', zorder=0)
 
-    ax.legend(loc='center', ncols=1, bbox_to_anchor=(-0.35, 0.5))
+    ax.legend(loc='center', ncols=1, bbox_to_anchor=(-0.23, 0.5))
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##########################
@@ -552,7 +546,7 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
 
     # Set up fig
     plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     ax.set_xlabel(r'number of exponentials')
     ax.set_ylabel(r'func $L_2$ norm')
 
@@ -586,8 +580,6 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ############################
@@ -624,7 +616,7 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 
     # Set up fig
     plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     ax.set_xlabel(r'number of exponentials')
     ax.set_ylabel(r'relative advantage of learned')
 
@@ -643,8 +635,6 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 #############################
@@ -659,7 +649,7 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
 
     # Set up fig
     plt.close('all')
-    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True)
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), sharey=True, layout='constrained')
     axs[0].set_xlabel(r'number of exponentials')
     axs[1].set_xlabel(r'number of exponentials')
     axs[0].set_ylabel(r'func $L_2$ norm')
@@ -712,8 +702,6 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     axs[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     axs[1].set_xscale('log')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 #############################
@@ -728,7 +716,7 @@ def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='
     
     # Set up fig
     plt.close('all')
-    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    fig = plt.figure(figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     ax = plt.axes(projection='3d')
 
     img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
@@ -744,8 +732,6 @@ def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='
     cbar.solids.set(alpha=1.0)
     ax.legend(loc='upper right')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##############################
@@ -757,7 +743,7 @@ def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
     
     # Set up fig
     plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
+    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     ax.set_xlabel(r'step size, $h$')
     ax.set_ylabel(r'$L_2$ error')
 
@@ -778,8 +764,6 @@ def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name=
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
 
-    plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##################################
@@ -799,7 +783,7 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
         addSlice(lambda1, lambda2, loss, ax)
 
     plt.close('all')
-    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
+    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained', sharex=True, sharey=True)
 
     minVal = np.min(np.array([
              np.min(allPSS[3]),
@@ -850,38 +834,57 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
     cbar = fig.colorbar(imComp, ax=axs)
     cbar.solids.set(alpha=0.2)
     
-    # plt.tight_layout()
-    # plt.show()
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ##################################
 ### FIGURE 11: sampleInitConds ###
 ##################################
 def plotSampleInitConds(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='sampleInitConds'):
-    print('TODO!')
-    # uInitsVal, uFinalRefVal = loadIvpRefs('data/ivpRefsOrig.npz')
+    randFigs = [9, 83, 122, 156, 170, 174]
+    pot, xGrid, uInitsVal, _ = loadIvpRefs('data/ivpRefsOrig.npz')
 
-    # def pipeLine(ax, xGrid, uInit, pot, showAx2 = False):
-    #     xGrid = np.array(xGrid)
-    #     uInit = np.array(uInit)
+    def pipeLine(ax, xGrid, uInit, pot, showAx2 = False):
+        xGrid = np.array(xGrid)
+        uInit = np.array(uInit)
 
-    #     handle1 = ax.plot(xGrid, np.abs(uInit), 'k', label='Mod')
-    #     handle2 = ax.plot(xGrid, np.real(uInit), 'b', label='Real')
-    #     handle3 = ax.plot(xGrid, np.imag(uInit), 'r', label='Imag')
-    #     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
-    #     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+        ax.plot(xGrid, np.abs(uInit), 'k', label='Mod')
+        ax.plot(xGrid, np.real(uInit), 'b', label='Real')
+        ax.plot(xGrid, np.imag(uInit), 'r', label='Imag')
+        ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
 
-    #     ax2 = ax.twinx()
-    #     ax2.set_yscale('log')
-    #     if showAx2:
-    #         ax2.set_ylabel('Potential')
-    #     else:
-    #         ax2.set_yticklabels([])
+        ax2 = ax.twinx()
+        ax2.set_yscale('log')
+        if showAx2:
+            ax2.set_ylabel('Potential')
+        else:
+            ax2.set_yticklabels([])
 
-    #     handle4 = ax2.plot(xGrid, pot - min(pot) + 1, color='yellow', alpha=0.5, label='Potential')
-    #     ax2.fill_between(xGrid, pot - min(pot) + 1, 0, color='yellow', alpha=0.1)
+        ax2.plot(xGrid, pot - min(pot) + 1, color='yellow', alpha=0.5, label='Potential')
+        ax2.fill_between(xGrid, pot - min(pot) + 1, 0, color='yellow', alpha=0.1)
 
-    #     return handle1, handle2, handle3, handle4
+    # Set up fig
+    plt.close('all')
+    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained', sharex=True, sharey=True)
+    axs[1,0].set_xlabel('Spatial Domain')
+    axs[1,1].set_xlabel('Spatial Domain')
+    axs[1,2].set_xlabel('Spatial Domain')
+    axs[0,0].set_ylabel('Magnitude of Sol')
+    axs[1,0].set_ylabel('Magnitude of Sol')
+
+    pipeLine(axs[0,0], xGrid, uInitsVal[0][randFigs[0]], pot)
+    pipeLine(axs[0,1], xGrid, uInitsVal[0][randFigs[1]], pot)
+    pipeLine(axs[0,2], xGrid, uInitsVal[0][randFigs[2]], pot, True)
+    pipeLine(axs[1,0], xGrid, uInitsVal[0][randFigs[3]], pot)
+    pipeLine(axs[1,1], xGrid, uInitsVal[0][randFigs[4]], pot)
+    pipeLine(axs[1,2], xGrid, uInitsVal[0][randFigs[5]], pot, True)
+    handles, _ = axs[1,1].get_legend_handles_labels()
+    handle = Line2D([0], [0], color='yellow', alpha=0.5, label='Potential')
+    handles.extend([handle])
+
+    fig.legend(loc='center', ncols = 4, handles=handles, bbox_to_anchor=(0.5, -0.05))
+
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 #############################
 ### FIGURE 12: paramOptim ###
@@ -900,7 +903,7 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ##################
 ### CALL PLOTS ###
 ##################
-plotParamTransform( 0.85, 4.0, '.png', 'paramTransform' )
+plotParamTransform( 0.85, 3.7, '.png', 'paramTransform' )
 plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
 plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
