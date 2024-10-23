@@ -645,6 +645,43 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     # print(f'Relative speed of Learn8A vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossLearn8ACommon[maxInd]):.3f}')
     # print(f'Relative speed of Learn8B vs Yosh at maximum relative advantage is {np.sqrt(lossYoshCommon[maxInd]/lossLearn8BCommon[maxInd]):.3f}')
     
+    # maxInd = np.argmax(ratioAll)
+    # lossTrot    =    lossTrotCommon[maxInd]
+    # lossStrang  =  lossStrangCommon[maxInd]
+    # lossYosh    =    lossYoshCommon[maxInd]
+    # lossLearn5A = lossLearn5ACommon[maxInd]
+    # lossLearn8A = lossLearn8ACommon[maxInd]
+    # lossLearn8B = lossLearn8BCommon[maxInd]
+
+    # indMinTrot    = np.argmin(np.abs(lossYoshCommon - lossTrot   ))
+    # indMinStrang  = np.argmin(np.abs(lossYoshCommon - lossStrang ))
+    # indMinYosh    = np.argmin(np.abs(lossYoshCommon - lossYosh   ))
+    # indMinLearn5A = np.argmin(np.abs(lossYoshCommon - lossLearn5A))
+    # indMinLearn8A = np.argmin(np.abs(lossYoshCommon - lossLearn8A))
+    # indMinLearn8B = np.argmin(np.abs(lossYoshCommon - lossLearn8B))
+
+    # print(maxInd)
+    # print(indMinTrot)   
+    # print(indMinStrang) 
+    # print(indMinYosh)   
+    # print(indMinLearn5A)
+    # print(indMinLearn8A)
+    # print(indMinLearn8B)
+
+    # print(numExpsCommon[indMinTrot   ])
+    # print(numExpsCommon[indMinStrang ])
+    # print(numExpsCommon[indMinYosh   ])
+    # print(numExpsCommon[indMinLearn5A])
+    # print(numExpsCommon[indMinLearn8A])
+    # print(numExpsCommon[indMinLearn8B])
+
+    # print(f'{numExpsCommon[indMinTrot   ]/numExpsCommon[maxInd]:0.2f}')
+    # print(f'{numExpsCommon[indMinStrang ]/numExpsCommon[maxInd]:0.2f}')
+    # print(f'{numExpsCommon[indMinYosh   ]/numExpsCommon[maxInd]:0.2f}')
+    # print(f'{numExpsCommon[indMinLearn5A]/numExpsCommon[maxInd]:0.2f}')
+    # print(f'{numExpsCommon[indMinLearn8A]/numExpsCommon[maxInd]:0.2f}')
+    # print(f'{numExpsCommon[indMinLearn8B]/numExpsCommon[maxInd]:0.2f}')
+
     # Set up fig
     plt.close('all')
     fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)))
