@@ -420,7 +420,7 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
         addSlice(lambda1, lambda2, loss, ax)
 
     plt.close('all')
-    fig, axs = plt.subplots(3, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
+    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
 
     minVal = np.min(np.array([
              np.min(allPSS[3]),
@@ -445,29 +445,29 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
     imComp=matplotlib.cm.ScalarMappable(norm=normalizerComp, cmap = cmapComp)
 
     pipeLine(allPSS, axs[0,0])
-    pipeLine(allPSM, axs[1,0])
-    pipeLine(allPSF, axs[2,0])
+    pipeLine(allPSM, axs[0,1])
+    pipeLine(allPSF, axs[0,2])
 
-    pipeLine(allLS, axs[0,1])
+    pipeLine(allLS, axs[1,0])
     pipeLine(allLM, axs[1,1])
-    pipeLine(allLF, axs[2,1])
+    pipeLine(allLF, axs[1,2])
 
-    cols = [r'$[0.125, 0.25, 0.25]$', r'$[0.3314, -0.07304, -0.1821]$']
-    for ax, col in zip(axs[0], cols):
-        ax.set_title(col)
-
+    speeds = [r'Slow Dyn $\perp e_1$', r'Med Dyn $\perp e_2$', r'Fast Dyn $\perp e_3$']
     xLabels = [r'$e_2$', r'$e_1$', r'$e_1$']
     yLabels = [r'$e_3$', r'$e_3$', r'$e_2$']
-    speeds = [r'Slow Dyn', r'Med Dyn', r'Fast Dyn']
-    for i in range(len(axs)):
-        axs[i,0].set_xlabel(xLabels[i])
-        axs[i,0].set_ylabel(yLabels[i])
-        axs[i,1].set_xlabel(xLabels[i])
-        axs[i,1].set_ylabel(yLabels[i])
-        tempAx = axs[i,1].twinx()
-        # tempAx.set_ylabel(speeds[i], size='large')
-        tempAx.set_ylabel(speeds[i])
+    for i in range(3):
+        axs[0,i].set_title(speeds[i])
+        axs[0,i].set_xlabel(xLabels[i])
+        axs[0,i].set_ylabel(yLabels[i])
+        axs[1,i].set_xlabel(xLabels[i])
+        axs[1,i].set_ylabel(yLabels[i])
+
+    minima = [r'$\gamma = [0.125, 0.25, 0.25]$', r'$\gamma = [0.3314, -0.07304, -0.1821]$']
+    for i in range(2):
+        tempAx = axs[i,2].twinx()
+        tempAx.set_ylabel(minima[i])
         tempAx.set_yticks([])
+
 
     cbar = fig.colorbar(imComp, ax=axs)
     cbar.solids.set(alpha=0.2)
@@ -822,7 +822,7 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
         addSlice(lambda1, lambda2, loss, ax)
 
     plt.close('all')
-    fig, axs = plt.subplots(3, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
+    fig, axs = plt.subplots(2, 3, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained", sharex=True, sharey=True)
 
     minVal = np.min(np.array([
              np.min(allPSS[3]),
@@ -847,28 +847,27 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
     imComp=matplotlib.cm.ScalarMappable(norm=normalizerComp, cmap = cmapComp)
 
     pipeLine(allPSS, axs[0,0])
-    pipeLine(allPSM, axs[1,0])
-    pipeLine(allPSF, axs[2,0])
+    pipeLine(allPSM, axs[0,1])
+    pipeLine(allPSF, axs[0,2])
 
-    pipeLine(allLS, axs[0,1])
+    pipeLine(allLS, axs[1,0])
     pipeLine(allLM, axs[1,1])
-    pipeLine(allLF, axs[2,1])
+    pipeLine(allLF, axs[1,2])
 
-    cols = [r'$[0.125, 0.25, 0.25]$', r'$[0.3314, -0.07304, -0.1821]$']
-    for ax, col in zip(axs[0], cols):
-        ax.set_title(col)
-
+    speeds = [r'Slow Dyn $\perp e_1$', r'Med Dyn $\perp e_2$', r'Fast Dyn $\perp e_3$']
     xLabels = [r'$e_2$', r'$e_1$', r'$e_1$']
     yLabels = [r'$e_3$', r'$e_3$', r'$e_2$']
-    speeds = [r'Slow Dyn', r'Med Dyn', r'Fast Dyn']
-    for i in range(len(axs)):
-        axs[i,0].set_xlabel(xLabels[i])
-        axs[i,0].set_ylabel(yLabels[i])
-        axs[i,1].set_xlabel(xLabels[i])
-        axs[i,1].set_ylabel(yLabels[i])
-        tempAx = axs[i,1].twinx()
-        # tempAx.set_ylabel(speeds[i], size='large')
-        tempAx.set_ylabel(speeds[i])
+    for i in range(3):
+        axs[0,i].set_title(speeds[i])
+        axs[0,i].set_xlabel(xLabels[i])
+        axs[0,i].set_ylabel(yLabels[i])
+        axs[1,i].set_xlabel(xLabels[i])
+        axs[1,i].set_ylabel(yLabels[i])
+
+    minima = [r'$\gamma = [0.125, 0.25, 0.25]$', r'$\gamma = [0.3314, -0.07304, -0.1821]$']
+    for i in range(2):
+        tempAx = axs[i,2].twinx()
+        tempAx.set_ylabel(minima[i])
         tempAx.set_yticks([])
 
     cbar = fig.colorbar(imComp, ax=axs)
@@ -926,14 +925,14 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ##################
 plotParamTransform( 0.85, 4.0, '.png', 'paramTransform' )
 plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
-plotLoss2dPlanes(   0.85, 1.0, '.png', 'loss2dPlanes'   )
+plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
 plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
 plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
 plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
 plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.85, 1.0, '.png', 'loss2dPlanesGen')
+plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
 plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
 plotParamOptim(     0.85, 2.0, '.png', 'paramOptim'     )
 plotAllOptims(      0.85, 2.0, '.png', 'allOptims'      )
