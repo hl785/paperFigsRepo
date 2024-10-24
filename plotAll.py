@@ -369,6 +369,53 @@ def loadParamLossTrain():
     return [[learn5AVal, learn5ALoss, learn5AP1, learn5AP2, learn5AP3, [], [], [], True], 
             [learn8AVal, learn8ALoss, learn8AP1, learn8AP2, learn8AP3, learn8AP4, learn8AP5, learn8AP6, False],
             [learn8BVal, learn8BLoss, learn8BP1, learn8BP2, learn8BP3, learn8BP4, learn8BP5, learn8BP6, False]]
+    
+def loadParamLossOptims():
+    with np.load('data/paramLossOptims.npz') as data:
+        adaGL0p01M0p05Loss = data['adaGL0p01M0p05Loss']
+        adaGL0p01M0p10Loss = data['adaGL0p01M0p10Loss']
+        adamL0p01M0p05Loss = data['adamL0p01M0p05Loss']
+        adamL0p01M0p10Loss = data['adamL0p01M0p10Loss']
+        lionL0p01M0p05Loss = data['lionL0p01M0p05Loss']
+        lionL0p01M0p10Loss = data['lionL0p01M0p10Loss']
+        lemaL0p20M0p05Loss = data['lemaL0p20M0p05Loss']
+        lemaL0p20M0p10Loss = data['lemaL0p20M0p10Loss']
+    
+        adaGL0p01M0p05X = data['adaGL0p01M0p05X']
+        adaGL0p01M0p10X = data['adaGL0p01M0p10X']
+        adamL0p01M0p05X = data['adamL0p01M0p05X']
+        adamL0p01M0p10X = data['adamL0p01M0p10X']
+        lionL0p01M0p05X = data['lionL0p01M0p05X']
+        lionL0p01M0p10X = data['lionL0p01M0p10X']
+        lemaL0p20M0p05X = data['lemaL0p20M0p05X']
+        lemaL0p20M0p10X = data['lemaL0p20M0p10X']
+    
+        adaGL0p01M0p05Y = data['adaGL0p01M0p05Y']
+        adaGL0p01M0p10Y = data['adaGL0p01M0p10Y']
+        adamL0p01M0p05Y = data['adamL0p01M0p05Y']
+        adamL0p01M0p10Y = data['adamL0p01M0p10Y']
+        lionL0p01M0p05Y = data['lionL0p01M0p05Y']
+        lionL0p01M0p10Y = data['lionL0p01M0p10Y']
+        lemaL0p20M0p05Y = data['lemaL0p20M0p05Y']
+        lemaL0p20M0p10Y = data['lemaL0p20M0p10Y']
+    
+        adaGL0p01M0p05Z = data['adaGL0p01M0p05Z']
+        adaGL0p01M0p10Z = data['adaGL0p01M0p10Z']
+        adamL0p01M0p05Z = data['adamL0p01M0p05Z']
+        adamL0p01M0p10Z = data['adamL0p01M0p10Z']
+        lionL0p01M0p05Z = data['lionL0p01M0p05Z']
+        lionL0p01M0p10Z = data['lionL0p01M0p10Z']
+        lemaL0p20M0p05Z = data['lemaL0p20M0p05Z']
+        lemaL0p20M0p10Z = data['lemaL0p20M0p10Z']
+
+    return [[adaGL0p01M0p05Loss, adaGL0p01M0p05X, adaGL0p01M0p05Y, adaGL0p01M0p05Z, 'mediumvioletred', 'AdaGrad 0.05' ], 
+            [adaGL0p01M0p10Loss, adaGL0p01M0p10X, adaGL0p01M0p10Y, adaGL0p01M0p10Z, 'firebrick'      , 'AdaGrad 0.1'  ], 
+            [adamL0p01M0p05Loss, adamL0p01M0p05X, adamL0p01M0p05Y, adamL0p01M0p05Z, 'peru'           , 'Adam 0.05'    ], 
+            [adamL0p01M0p10Loss, adamL0p01M0p10X, adamL0p01M0p10Y, adamL0p01M0p10Z, 'darkorange'     , 'Adam 0.1'     ], 
+            [lionL0p01M0p05Loss, lionL0p01M0p05X, lionL0p01M0p05Y, lionL0p01M0p05Z, 'yellowgreen'    , 'Lion 0.05'    ], 
+            [lionL0p01M0p10Loss, lionL0p01M0p10X, lionL0p01M0p10Y, lionL0p01M0p10Z, 'forestgreen'    , 'Lion 0.1'     ], 
+            [lemaL0p20M0p05Loss, lemaL0p20M0p05X, lemaL0p20M0p05Y, lemaL0p20M0p05Z, 'royalblue'      , 'Lev-Marq 0.05'], 
+            [lemaL0p20M0p10Loss, lemaL0p20M0p10X, lemaL0p20M0p10Y, lemaL0p20M0p10Z, 'lightskyblue'   , 'Lev-Marq 0.1' ]]
 
 ###################################################################################################################################
 
@@ -979,7 +1026,36 @@ def plotParamOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='p
 ### FIGURE 13: allOptims ###
 ############################
 def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='allOptims'):
-    print('TODO!')
+    datas = loadParamLossOptims()
+    
+    def pipeLine(axs, data):
+        loss, x, y, z, color, label = data
+        axs[0].plot(loss, color=color, linestyle='-')
+        axs[1].plot(x, color=color, linestyle='-', label=label)
+        axs[2].plot(y, color=color, linestyle='-')
+        axs[3].plot(z, color=color, linestyle='-')
+    
+    # Set up fig
+    plt.close('all')
+    fig, axs = plt.subplots(1, 4, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
+    
+    for data in datas:
+        pipeLine(axs, data)
+
+    for ax in axs.reshape(-1):
+        ax.set_xlabel(r'Train iter')
+        ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+
+    axs[0].set_xscale('log')
+    axs[0].set_yscale('log')
+    axs[0].set_ylabel(r'Loss')
+    axs[1].set_ylabel(r'$\gamma_1$')
+    axs[2].set_ylabel(r'$\gamma_2$')
+    axs[3].set_ylabel(r'$\gamma_3$')
+    fig.legend(loc='center', ncols=4, bbox_to_anchor=(0.5, -0.15))
+
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ###################################################################################################################################
 
@@ -998,4 +1074,4 @@ plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
 plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
 plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
 plotParamOptim(     0.85, 2.0, '.png', 'paramOptim'     )
-plotAllOptims(      0.85, 2.0, '.png', 'allOptims'      )
+plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
