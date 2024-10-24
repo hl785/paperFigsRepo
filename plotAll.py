@@ -335,6 +335,41 @@ def loadIvpRefs(path):
 
     return pot, xGrid, uInitsVal, uFinalRefVal
 
+def loadParamLossTrain():
+    with np.load('data/paramLossTrain.npz') as data:
+        learn5AVal = data['learn5aVal']
+        learn8AVal = data['learn8aVal']
+        learn8BVal = data['learn8bVal']
+
+        learn5ALoss = data['learn5aLoss']
+        learn8ALoss = data['learn8aLoss']
+        learn8BLoss = data['learn8bLoss']
+
+        learn5AP1 = data['learn5aP1']
+        learn8AP1 = data['learn8aP1']
+        learn8BP1 = data['learn8bP1']
+
+        learn5AP2 = data['learn5aP2']
+        learn8AP2 = data['learn8aP2']
+        learn8BP2 = data['learn8bP2']
+
+        learn5AP3 = data['learn5aP3']
+        learn8AP3 = data['learn8aP3']
+        learn8BP3 = data['learn8bP3']
+
+        learn8AP4 = data['learn8aP4']
+        learn8BP4 = data['learn8bP4']
+
+        learn8AP5 = data['learn8aP5']
+        learn8BP5 = data['learn8bP5']
+
+        learn8AP6 = data['learn8aP6']
+        learn8BP6 = data['learn8bP6']
+
+    return [[learn5AVal, learn5ALoss, learn5AP1, learn5AP2, learn5AP3, [], [], [], True], 
+            [learn8AVal, learn8ALoss, learn8AP1, learn8AP2, learn8AP3, learn8AP4, learn8AP5, learn8AP6, False],
+            [learn8BVal, learn8BLoss, learn8BP1, learn8BP2, learn8BP3, learn8BP4, learn8BP5, learn8BP6, False]]
+
 ###################################################################################################################################
 
 ################################
@@ -890,7 +925,55 @@ def plotSampleInitConds(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', na
 ### FIGURE 12: paramOptim ###
 #############################
 def plotParamOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='paramOptim'):
-    print('TODO!')
+    allLearns = loadParamLossTrain()
+    splitNames = getSplitNames()
+    splitColours = getSplitColours()
+
+    def pipeLine(axs, val, loss, p1, p2, p3, p4, p5, p6, color, label, short = False):
+        handle = axs[0].plot(val, color=color, linestyle='-', label=label)
+        axs[0].plot(loss, color=color, linestyle='--', alpha=0.2)
+        
+        axs[1].plot(p1, color=color, linestyle='-', alpha=0.75)
+        axs[1].plot(p2, color=color, linestyle='-', alpha=0.75)
+        axs[1].plot(p3, color=color, linestyle='-', alpha=0.75)
+
+        if short:
+            return handle
+    
+        axs[1].plot(p4, color=color, linestyle='-', alpha=0.75)
+        axs[1].plot(p5, color=color, linestyle='-', alpha=0.75)
+        axs[1].plot(p6, color=color, linestyle='-', alpha=0.75)
+
+        return handle
+
+    # Set up fig
+    plt.close('all')
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
+    handles, _ = axs[0].get_legend_handles_labels()
+    # handles = []
+
+    for i, allLearn in enumerate(allLearns):
+        handle = pipeLine(axs, allLearn[0], allLearn[1], allLearn[2], allLearn[3], allLearn[4], 
+                          allLearn[5], allLearn[6], allLearn[7], splitColours[i+3], splitNames[i+3], allLearn[8])
+        handles.extend(handle)
+        # handles.append(handle)
+        
+    axs[0].set_xlabel(r'Training iteration')
+    axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+        
+    axs[1].set_xlabel(r'Training iteration')
+    axs[1].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+
+    axs[0].set_xscale('log')
+    axs[0].set_yscale('log')
+    axs[0].set_ylabel(r'Loss')
+    axs[1].set_xscale('log')
+    axs[1].set_ylabel(r'$\gamma_k$')
+    axs[1].legend(handles=handles, loc='best')
+
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
 ############################
 ### FIGURE 13: allOptims ###
