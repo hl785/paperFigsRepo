@@ -653,9 +653,10 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
     ax.fill_between(numExpsLearn5AProj[:plotTo], lowQLearn5AProj[:plotTo], highQLearn5AProj[:plotTo], color='lime', alpha=0.2, linewidth=0, zorder=0)
 
     ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
-    ax.loglog(numExps[0][-4:], 2*(losses[0][-1]/(numExps[0][-1]**-1.0)) * np.power(numExps[0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
-    ax.loglog(numExps[1][-4:], 2*(losses[1][-1]/(numExps[1][-1]**-2.0)) * np.power(numExps[1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
-    ax.loglog(numExps[2][-4:], 2*(losses[2][-1]/(numExps[2][-1]**-4.0)) * np.power(numExps[2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    orderLineWidth = np.array([200, 1000])
+    ax.loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
+    ax.loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
+    ax.loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
 
     ax.legend(loc='best', ncols=3)
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
@@ -754,14 +755,16 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
             axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
     
     axs[0].loglog(numExps[0][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
-    axs[0].loglog(numExps[0][0][-4:], 2*(losses[0][0][-1]/(numExps[0][0][-1]**-1.0)) * np.power(numExps[0][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
-    axs[0].loglog(numExps[0][1][-4:], 2*(losses[0][1][-1]/(numExps[0][1][-1]**-2.0)) * np.power(numExps[0][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
-    axs[0].loglog(numExps[0][2][-4:], 2*(losses[0][2][-1]/(numExps[0][2][-1]**-4.0)) * np.power(numExps[0][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    orderLineWidth = np.array([200, 1000])
+    axs[0].loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
+    axs[0].loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
+    axs[0].loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
     
+    orderLineWidth = 4*np.array([200, 1000])
     axs[1].loglog(numExps[2][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5)
-    axs[1].loglog(numExps[2][0][-4:], 2*(losses[2][0][-1]/(numExps[2][0][-1]**-1.0)) * np.power(numExps[2][0], -1.0)[-4:], 'black', linestyle=':', alpha=0.5)
-    axs[1].loglog(numExps[2][1][-4:], 2*(losses[2][1][-1]/(numExps[2][1][-1]**-2.0)) * np.power(numExps[2][1], -2.0)[-4:], 'black', linestyle=':', alpha=0.5)
-    axs[1].loglog(numExps[2][2][-4:], 2*(losses[2][2][-1]/(numExps[2][2][-1]**-4.0)) * np.power(numExps[2][2], -4.0)[-4:], 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
 
     # Auxiliary settings
     handles, _ = axs[0].get_legend_handles_labels()
@@ -1018,7 +1021,7 @@ def plotParamOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='p
     axs[0].set_ylabel(r'Loss')
     axs[1].set_xscale('log')
     axs[1].set_ylabel(r'$\gamma_k$')
-    axs[1].legend(handles=handles, loc='best')
+    axs[0].legend(handles=handles, loc='best')
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
@@ -1073,5 +1076,5 @@ plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
 plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
 plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
 plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
-plotParamOptim(     0.85, 2.0, '.png', 'paramOptim'     )
+plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
 plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
