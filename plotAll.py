@@ -813,9 +813,9 @@ def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='
     ax.set_xlabel(r'$\gamma_1$')
     ax.set_ylabel(r'$\gamma_2$')
     ax.set_zlabel(r'$\gamma_3$')
-    cbar = fig.colorbar(img, location='right', shrink=0.5, pad=0.04)
-    cbar.solids.set(alpha=1.0)
-    ax.legend(loc='upper right')
+    # cbar = fig.colorbar(img, location='right', shrink=0.5, pad=0.04)
+    # cbar.solids.set(alpha=1.0)
+    # ax.legend(loc='upper right')
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
