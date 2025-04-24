@@ -30,15 +30,32 @@ def toFigSize(pageFracWidth, aspectRatio):
 def getDPI(fileType='.png'):
     return 'figure' if fileType == '.pdf' else 450
 
-def getSplitNames(incStrang4X = False):
+def getInds(incStrang4X, incLearn5AProj):
+    if incStrang4X and incLearn5AProj:
+        return [0,1,2,3,4,5,6,7,8,9]
     if incStrang4X:
-        return ['Trotter', 'Strang', 'Yoshida', r'$4 \times$ Strang', 'Learn5A', 'Learn8A', 'Learn8B']
-    return ['Trotter', 'Strang', 'Yoshida', 'Learn5A', 'Learn8A', 'Learn8B']
+        return [0,1,2,3,4,5,6,8,9]
+    if incLearn5AProj:
+        return [0,1,2,4,5,6,7,8,9]
+    return [0,1,2,4,5,6,8,9]
 
-def getSplitColours(incStrang4X = False):
-    if incStrang4X:
-        return ['mediumvioletred', 'firebrick', 'peru', 'sandybrown', 'forestgreen', 'royalblue', 'lightskyblue']
-    return ['mediumvioletred', 'firebrick', 'peru', 'forestgreen', 'royalblue', 'lightskyblue']
+def getSplitNames(incStrang4X = False, incLearn5AProj = False):
+    inds = getInds(incStrang4X, incLearn5AProj)
+    names = ['Trotter', 'Strang', 'Yoshida', r'$4 \times$ Strang', 'Learn5A', 'Learn8A', 'Learn8B', 'Learn5AProj', 'Blanes4', 'Blanes7']
+    return [names[i] for i in inds]
+
+def getSplitColours(incStrang4X = False, incLearn5AProj = False):
+    inds = getInds(incStrang4X, incLearn5AProj)
+    colours = ['mediumvioletred', 'firebrick', 'peru', 'sandybrown', 'forestgreen', 'royalblue', 'lightskyblue', 'lime', 'black', 'deeppink']
+    return [colours[i] for i in inds]
+
+def getSplitRelLen(incStrang4X = False, incLearn5AProj = False):
+    def fnGen(mult, add):
+        return lambda val : val*mult + add
+    
+    inds = getInds(incStrang4X, incLearn5AProj)
+    fns = [fnGen(2 - 0, 0), fnGen(4 - 2, 1), fnGen(8 - 2, 1), fnGen(10 - 2, 1), fnGen(10 - 2, 1), fnGen(16 - 2, 1), fnGen(16 - 2, 1), fnGen(10 - 2, 1), fnGen(8 - 2, 1), fnGen(14 - 2, 1)]
+    return [fns[i] for i in inds]
 
 def paramTransform(gamma):
     # Faster to not use jax?
@@ -80,6 +97,33 @@ def paramTransform(gamma):
 
     return a, b
 
+def getSymSplitGamma(incStrang4X = False, incLearn5AProj = False):
+    inds = getInds(incStrang4X, incLearn5AProj)
+    gammas = [None, # Trotter
+              [], # Strang
+              [0.6756035959798289, 1.3512071919596578], # Yoshida
+              [0.125, 0.25, 0.25], # 4X Strang
+              [0.36266572103945605, -0.10032032403589856, -0.1352975465549758], # Learn5A
+              [0.2134815929093979, -0.05820764895590353, 0.41253264535444745, -0.13523357389399546, 0.4443203153968813, -0.02509257759188356], # Learn8A
+              [0.11775349336573762, 0.38763572759753917, 0.36597039590662095, 0.2921906385941626, 0.05641644544703187, -0.021241661286415584], # Learn8B
+              [0.346035366644, -0.112267102113, -0.132], # Learn5AProj
+              [0.11888010966548, 0.29619504261126], # Blanes4
+              [0.0829844064174052, 0.396309801498368, -0.0390563049223486, 0.245298957184271, 0.604872665711080]] # Blanes7
+
+    return [gammas[i] for i in inds[1:]]
+
+def getSplitAlphaBeta(incStrang4X = False, incLearn5AProj = False):
+    gammas = getSymSplitGamma(incStrang4X, incLearn5AProj)
+    alphas = [np.array([1.0])]  # Force add Trotter as not sym
+    betas = [np.array([1.0])]    # Force add Trotter as not sym
+
+    for gamma in gammas:
+        alpha, beta = paramTransform(np.array(gamma))
+        alphas.append(alpha)
+        betas.append(beta)
+    
+    return alphas, betas
+
 def getLen5Order4Man():
     offset = 0.001
     zs = np.concatenate((np.linspace(-2.0, 0.0-offset, 4000),np.linspace(0.5+offset, 2.0, 3000)))
@@ -119,118 +163,55 @@ def coordTransform(cent, p1, p2, x, y, z):
 #################
 ### LOAD DATA ###
 #################
-def loadLossConvOrig():
-    with np.load('data/lossConvOrig.npz') as data:
-        unitNumStepsTrot   = data['unitNumStepsTrot']
-        unitNumStepsStrang = data['unitNumStepsStrang']
-        unitNumStepsYosh   = data['unitNumStepsYosh']
-
-        unitNumStepsGammaLearn5A = data['unitNumStepsGammaLearn3A']
-        unitNumStepsGammaLearn8A = data['unitNumStepsGammaLearn8A']
-        unitNumStepsGammaLearn8B = data['unitNumStepsGammaLearn8B']
-
-        lossTrotArr   = data['lossTrot'] 
-        lossStrangArr = data['lossStrang'] 
-        lossYoshArr   = data['lossYosh']
-
-        lossLearn5AArr = data['lossLearn3A'] 
-        lossLearn8AArr = data['lossLearn8A'] 
-        lossLearn8BArr = data['lossLearn8B']
-
-    # Number of Exponentials
-    # TODO: Get from data
-    timeRange = 10
-    numExpsTrot   =   unitNumStepsTrot*timeRange*(2 - 0) + 0
-    numExpsStrang = unitNumStepsStrang*timeRange*(4 - 2) + 1
-    numExpsYosh   =   unitNumStepsYosh*timeRange*(8 - 2) + 1
-
-    numExpsLearn5A = unitNumStepsGammaLearn5A*timeRange*(10 - 2) + 1
-    numExpsLearn8A = unitNumStepsGammaLearn8A*timeRange*(16 - 2) + 1
-    numExpsLearn8B = unitNumStepsGammaLearn8B*timeRange*(16 - 2) + 1
-
-    # Calc avg loss
-    lossTrot   = np.quantile(np.abs(lossTrotArr  ), 0.5, axis=0)
-    lossStrang = np.quantile(np.abs(lossStrangArr), 0.5, axis=0)
-    lossYosh   = np.quantile(np.abs(lossYoshArr  ), 0.5, axis=0)
-
-    lossLearn5A = np.quantile(np.abs(lossLearn5AArr), 0.5, axis=0)
-    lossLearn8A = np.quantile(np.abs(lossLearn8AArr), 0.5, axis=0)
-    lossLearn8B = np.quantile(np.abs(lossLearn8BArr), 0.5, axis=0)
-
-    # Calc std dev
-    stdDev1 = 0.341
-    stdDev2 = 0.477
-    lowQTrot   = np.quantile(np.abs(lossTrotArr  ), 0.5 - stdDev1, axis=0)
-    lowQStrang = np.quantile(np.abs(lossStrangArr), 0.5 - stdDev1, axis=0)
-    lowQYosh   = np.quantile(np.abs(lossYoshArr  ), 0.5 - stdDev1, axis=0)
-
-    lowQLearn5A = np.quantile(np.abs(lossLearn5AArr), 0.5 - stdDev1, axis=0)
-    lowQLearn8A = np.quantile(np.abs(lossLearn8AArr), 0.5 - stdDev1, axis=0)
-    lowQLearn8B = np.quantile(np.abs(lossLearn8BArr), 0.5 - stdDev1, axis=0)
-
-    highQTrot   = np.quantile(np.abs(lossTrotArr  ), 0.5 + stdDev1, axis=0)
-    highQStrang = np.quantile(np.abs(lossStrangArr), 0.5 + stdDev1, axis=0)
-    highQYosh   = np.quantile(np.abs(lossYoshArr  ), 0.5 + stdDev1, axis=0)
-
-    highQLearn5A = np.quantile(np.abs(lossLearn5AArr), 0.5 + stdDev1, axis=0)
-    highQLearn8A = np.quantile(np.abs(lossLearn8AArr), 0.5 + stdDev1, axis=0)
-    highQLearn8B = np.quantile(np.abs(lossLearn8BArr), 0.5 + stdDev1, axis=0)
-
-    # Calc step sizes
-    stepSizeTrot   =   unitNumStepsTrot**(-1.0)
-    stepSizeStrang = unitNumStepsStrang**(-1.0)
-    stepSizeYosh   =   unitNumStepsYosh**(-1.0)
-
-    stepSizeLearn5A = unitNumStepsGammaLearn5A**(-1.0)
-    stepSizeLearn8A = unitNumStepsGammaLearn8A**(-1.0)
-    stepSizeLearn8B = unitNumStepsGammaLearn8B**(-1.0)
-    
-    return getSplitNames(), \
-           [lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B], \
-           [numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B], \
-           [lowQTrot, lowQStrang, lowQYosh, lowQLearn5A, lowQLearn8A, lowQLearn8B], \
-           [highQTrot, highQStrang, highQYosh, highQLearn5A, highQLearn8A, highQLearn8B], \
-           [stepSizeTrot, stepSizeStrang, stepSizeYosh, stepSizeLearn5A, stepSizeLearn8A, stepSizeLearn8B]
-
-def loadLossConvOptions(path, timeRange=10):
+def loadLossConv(path, incLearn5AProj = False, timeRange=10):
     with np.load(path) as data:
         unitNumStepsTrot   = data['unitNumStepsTrot']
         unitNumStepsStrang = data['unitNumStepsStrang']
         unitNumStepsYosh   = data['unitNumStepsYosh']
 
-        unitNumStepsGammaLearn5A = data['unitNumStepsGammaLearn3A']
-        unitNumStepsGammaLearn8A = data['unitNumStepsGammaLearn8A']
-        unitNumStepsGammaLearn8B = data['unitNumStepsGammaLearn8B']
+        unitNumStepsLearn5A = data['unitNumStepsLearn5A']
+        unitNumStepsLearn8A = data['unitNumStepsLearn8A']
+        unitNumStepsLearn8B = data['unitNumStepsLearn8B']
+
+        unitNumStepsLearn5AProj = data['unitNumStepsLearn5AProj']
+        unitNumStepsBlanes4     = data['unitNumStepsBlanes4']
+        unitNumStepsBlanes7     = data['unitNumStepsBlanes7']
 
         lossTrotArr   = data['lossTrot'] 
         lossStrangArr = data['lossStrang'] 
         lossYoshArr   = data['lossYosh']
 
-        lossLearn5AArr = data['lossLearn3A'] 
+        lossLearn5AArr = data['lossLearn5A'] 
         lossLearn8AArr = data['lossLearn8A'] 
         lossLearn8BArr = data['lossLearn8B']
 
-    # Number of Exponentials
-    # TODO: Get from data
-    numExpsTrot   =   unitNumStepsTrot*timeRange*(2 - 0) + 0
-    numExpsStrang = unitNumStepsStrang*timeRange*(4 - 2) + 1
-    numExpsYosh   =   unitNumStepsYosh*timeRange*(8 - 2) + 1
-
-    numExpsLearn5A = unitNumStepsGammaLearn5A*timeRange*(10 - 2) + 1
-    numExpsLearn8A = unitNumStepsGammaLearn8A*timeRange*(16 - 2) + 1
-    numExpsLearn8B = unitNumStepsGammaLearn8B*timeRange*(16 - 2) + 1
-
-    # Calc avg loss
-    lossTrot   = np.quantile(np.abs(lossTrotArr  ), 0.5, axis=0)
-    lossStrang = np.quantile(np.abs(lossStrangArr), 0.5, axis=0)
-    lossYosh   = np.quantile(np.abs(lossYoshArr  ), 0.5, axis=0)
-
-    lossLearn5A = np.quantile(np.abs(lossLearn5AArr), 0.5, axis=0)
-    lossLearn8A = np.quantile(np.abs(lossLearn8AArr), 0.5, axis=0)
-    lossLearn8B = np.quantile(np.abs(lossLearn8BArr), 0.5, axis=0)
+        lossLearn5AProjArr = data['lossLearn5AProj']
+        lossBlanes4Arr     = data['lossBlanes4']
+        lossBlanes7Arr     = data['lossBlanes7']
     
-    return [lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B], \
-           [numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B]
+    lossArrList = [lossTrotArr, lossStrangArr, lossYoshArr, None, lossLearn5AArr, lossLearn8AArr, lossLearn8BArr, lossLearn5AProjArr, lossBlanes4Arr, lossBlanes7Arr]
+    unitNumStepsList = [unitNumStepsTrot, unitNumStepsStrang, unitNumStepsYosh, None, unitNumStepsLearn5A, unitNumStepsLearn8A, unitNumStepsLearn8B, unitNumStepsLearn5AProj, unitNumStepsBlanes4, unitNumStepsBlanes7]
+
+    inds = getInds(False, incLearn5AProj)
+    lossArrList = [lossArrList[i] for i in inds]
+    unitNumStepsList = [unitNumStepsList[i] for i in inds]
+
+    # Number of Exponentials
+    numExpsList = [fn(unitNumSteps*timeRange) for (fn, unitNumSteps) in zip(getSplitRelLen(False, incLearn5AProj), unitNumStepsList)]
+    
+    # Calc avg loss
+    lossList = [np.quantile(np.abs(lossArr), 0.5, axis=0) for lossArr in lossArrList]
+
+    # Calc std dev
+    stdDev1 = 0.341
+    stdDev2 = 0.477
+    lowQList  = [np.quantile(np.abs(lossArr), 0.5 - stdDev1, axis=0) for lossArr in lossArrList]
+    highQList = [np.quantile(np.abs(lossArr), 0.5 + stdDev1, axis=0) for lossArr in lossArrList]
+
+    # Calc step sizes
+    stepSizeList = [unitNumSteps**(-1.0) for unitNumSteps in unitNumStepsList]
+    
+    return getSplitNames(False, incLearn5AProj), lossList, numExpsList, lowQList, highQList, stepSizeList
 
 def loadLossLand(path):
     with np.load(path) as data:
@@ -258,71 +239,17 @@ def loadLossLand(path):
     return lossArr, xArr, yArr, zArr, sArr
 
 def loadLand2dPlanes(path, name='losses'):
-    allPSS = []
-    with np.load(path + '/polyStrangSlwDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allPSS = [xs, ys, zs, loss, cent, perp1, perp2]
-        
-    allPSM = []
-    with np.load(path + '/polyStrangMedDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allPSM = [xs, ys, zs, loss, cent, perp1, perp2]
+    def loadLand2dPlane(path, filename, name):
+        with np.load(path + filename) as data:
+            return [data['xs'], data['ys'], data['zs'], data[name], data['cent'], data['perp1'], data['perp2']]
 
-    allPSF = []
-    with np.load(path + '/polyStrangFstDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allPSF = [xs, ys, zs, loss, cent, perp1, perp2]
+    allPSS = loadLand2dPlane(path, '/polyStrangSlwDyn.npz', name)
+    allPSM = loadLand2dPlane(path, '/polyStrangMedDyn.npz', name)
+    allPSF = loadLand2dPlane(path, '/polyStrangFstDyn.npz', name)
 
-    allLS = []
-    with np.load(path + '/learnedSlwDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allLS = [xs, ys, zs, loss, cent, perp1, perp2]
-
-    allLM = []
-    with np.load(path + '/learnedMedDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allLM = [xs, ys, zs, loss, cent, perp1, perp2]
-
-    allLF = []
-    with np.load(path + '/learnedFstDyn.npz') as data:
-        xs = data['xs']
-        ys = data['ys']
-        zs = data['zs']
-        loss = data[name]
-        cent = data['cent']
-        perp1 = data['perp1']
-        perp2 = data['perp2']
-        allLF = [xs, ys, zs, loss, cent, perp1, perp2]
+    allLS = loadLand2dPlane(path, '/learnedSlwDyn.npz', name)
+    allLM = loadLand2dPlane(path, '/learnedMedDyn.npz', name)
+    allLF = loadLand2dPlane(path, '/learnedFstDyn.npz', name)
     
     return allPSS, allPSM, allPSF, allLS, allLM, allLF
 
@@ -452,7 +379,6 @@ def plotParamTransform(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', nam
     
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
-
 ###############################
 ### FIGURE 2: lossLandscape ###
 ###############################
@@ -471,6 +397,7 @@ def plotLossLandscape(pageFracWidth=0.95, aspectRatio=1.2, fileType='.png', name
     img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
     ax.scatter3D(xsPlus[inBoxPlus], ysPlus[inBoxPlus], zs[inBoxPlus], c='blue', label=r'$4^\mathrm{th}$ Order manifold')
     ax.scatter3D(xsMinus[inBoxMinus], ysMinus[inBoxMinus], zs[inBoxMinus], c='pink', label=r'_$4^\mathrm{th}$ Order manifold')
+    # TODO: Get from getSplitNames(), getSplitColours(), getSymSplitGamma()
     ax.scatter3D(0.125, 0.25, 0.25, c='green', label=r'$4 \times$ Strang') # PolyStrang
     ax.scatter3D(0.36266572103945605, -0.10032032403589856, -0.1352975465549758, c='red', label='Learn5A') # Learn5A
 
@@ -548,7 +475,6 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
         tempAx.set_ylabel(minima[i])
         tempAx.set_yticks([])
 
-
     cbar = fig.colorbar(imComp, ax=axs)
     cbar.solids.set(alpha=0.2)
     
@@ -558,7 +484,6 @@ def plotLoss2dPlanes(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', name='
 ### FIGURE 4: splitVisLearn ###
 ###############################
 def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name='splitVisLearn'):
-    
     def pipeLine(ax, alpha, beta, colour = 'grey', label = '', traceWidth = -1.0):
         assert(len(alpha) == len(beta))
         xs = np.array([0.0])
@@ -584,23 +509,9 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
     ax.set_xlabel(r'$u_1(t)$')
     ax.set_ylabel(r'$u_2(t)$')
 
-    gammas = [[], # Strang
-              [0.6756035959798289, 1.3512071919596578], # Yoshida
-              [0.125, 0.25, 0.25], # 4X Strang
-              [0.36266572103945605, -0.10032032403589856, -0.1352975465549758], # Learn5A
-              [0.2134815929093979, -0.05820764895590353, 0.41253264535444745, -0.13523357389399546, 0.4443203153968813, -0.02509257759188356], # Learn8A
-              [0.11775349336573762, 0.38763572759753917, 0.36597039590662095, 0.2921906385941626, 0.05641644544703187, -0.021241661286415584]] # Learn8B
-
-    alphas = [np.array([1.0])]  # Force add Trotter as not sym
-    betas = [np.array([1.0])]    # Force add Trotter as not sym
-
-    for gamma in gammas:
-        alpha, beta = paramTransform(np.array(gamma))
-        alphas.append(alpha)
-        betas.append(beta)
-
-    splitColours = getSplitColours(True)
-    for i, splitName in enumerate(getSplitNames(True)):
+    alphas, betas = getSplitAlphaBeta(True, True)
+    splitColours = getSplitColours(True, True)
+    for i, splitName in enumerate(getSplitNames(True, True)):
         pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName, 10.0)
     
     ax.plot(np.array([0.0, 1.0]), np.array([0.0, 1.0]), color='grey', label='Exact Sol', zorder=0)
@@ -615,16 +526,8 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 ### FIGURE 5: lossConv ###
 ##########################
 def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv'):
-    splitNames, losses, numExps, lowQs, highQs, _ = loadLossConvOrig()
-    lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = losses
-
-    trotMin = np.argmin(lossTrot)
-    strangMin = np.argmin(lossStrang)
-    yoshMin = np.argmin(lossYosh)
-    learn5AMin = np.argmin(lossLearn5A)
-    learn8AMin = np.argmin(lossLearn8A)
-    learn8BMin = np.argmin(lossLearn8B)
-    minInds = [trotMin, strangMin, yoshMin, learn5AMin, learn8AMin, learn8BMin]
+    splitNames, losses, numExps, lowQs, highQs, _ = loadLossConv('data/lossConvOrig.npz', True)
+    minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
 
     # Set up fig
     plt.close('all')
@@ -632,25 +535,11 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
     ax.set_xlabel(r'number of exponentials')
     ax.set_ylabel(r'func $L_2$ norm')
 
-    for i, splitCol in enumerate(getSplitColours()):
-        plotTo = minInds[i]+1
+    for i, splitCol in enumerate(getSplitColours(False, True)):
+        plotTo = minInds[i]
         filtExps = numExps[i][:plotTo]
         ax.loglog(filtExps, losses[i][:plotTo], splitCol, linestyle='-', marker='', alpha=1.0, label=splitNames[i])
         ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.2, linewidth=0)
-    
-    # Hach in Learn5AProj
-    with np.load('data/lossConvProj.npz') as data:
-        unitNumStepsLearn5AProj = data['unitNumStepsGammaLearn3AProj']
-        lossesLearn5AProj = data['lossLearn3AProj']
-    numExpsLearn5AProj = unitNumStepsLearn5AProj*10*(10 - 2) + 1
-    lossLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5, axis=0)
-    learn5AProjMin = np.argmin(lossLearn5AProj)
-    plotTo = learn5AProjMin+1
-    stdDev1 = 0.341
-    lowQLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5 - stdDev1, axis=0)
-    highQLearn5AProj = np.quantile(np.abs(lossesLearn5AProj), 0.5 + stdDev1, axis=0)
-    ax.loglog(numExpsLearn5AProj[:plotTo], lossLearn5AProj[:plotTo], 'lime', linestyle='-', marker='', alpha=1.0, label='Learn5AProj', zorder=0)
-    ax.fill_between(numExpsLearn5AProj[:plotTo], lowQLearn5AProj[:plotTo], highQLearn5AProj[:plotTo], color='lime', alpha=0.2, linewidth=0, zorder=0)
 
     ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
     orderLineWidth = np.array([200, 1000])
@@ -669,7 +558,7 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
 ### FIGURE 6: lossRelAdv ###
 ############################
 def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='lossRelAdv'):
-    _, losses, numExps, _, _, _ = loadLossConvOrig()
+    _, losses, numExps, _, _, _ = loadLossConv('data/lossConvOrig.npz')
     lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = losses
     numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B = numExps
 
@@ -724,9 +613,9 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 ### FIGURE 7: lossConvGen ###
 #############################
 def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvGen'):
-    splitNames, origlosses, origNumExps, _, _, _ = loadLossConvOrig()
-    newPotlosses, newPotNumExps = loadLossConvOptions('data/lossConvNewPot.npz')
-    newAlllosses, newAllNumExps = loadLossConvOptions('data/lossConvAllNew.npz', 30)
+    splitNames, origlosses, origNumExps, _, _, _ = loadLossConv('data/lossConvOrig.npz')
+    _, newPotlosses, newPotNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz')
+    _, newAlllosses, newAllNumExps, _, _, _ = loadLossConv('data/lossConvAllNew.npz', 30)
     losses = [origlosses, newPotlosses, newAlllosses]
     numExps = [origNumExps, newPotNumExps, newAllNumExps]
 
@@ -823,7 +712,7 @@ def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='
 ### FIGURE 9: bestFitCoefs ###
 ##############################
 def plotBestFitCoefs(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='bestFitCoefs'):
-    splitNames, losses, _, _, _, stepSizes = loadLossConvOrig()
+    splitNames, losses, _, _, _, stepSizes = loadLossConv('data/lossConvOrig.npz')
     splitColours = getSplitColours()
     
     # Set up fig
@@ -1070,11 +959,11 @@ plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
 plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
-plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
-plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
-plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
-plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
-plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
-plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
-plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
+# plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
+# plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
+# plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
+# plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
+# plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
+# plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
+# plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
+# plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
