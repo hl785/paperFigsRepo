@@ -558,11 +558,11 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
 ### FIGURE 6: lossRelAdv ###
 ############################
 def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='lossRelAdv'):
-    _, losses, numExps, _, _, _ = loadLossConv('data/lossConvOrig.npz')
-    lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = losses
-    numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B = numExps
+    _, losses, numExps, _, _, _ = loadLossConv('data/lossConvOrig.npz', True)
+    lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B, lossLearn5AProj, lossBlanes4, lossBlanes7 = losses
+    numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B, numExpsLearn5AProj, numExpsBlanes4, numExpsBlanes7 = numExps
 
-    classicalNumExps = np.concatenate((   numExpsTrot,  numExpsStrang,    numExpsYosh), axis=0)
+    classicalNumExps = np.concatenate((numExpsTrot, numExpsStrang, numExpsYosh), axis=0)
     learnedNumExps   = np.concatenate((numExpsLearn5A, numExpsLearn8A, numExpsLearn8B), axis=0)
 
     numExpsCommon = np.geomspace(max(min(classicalNumExps), min(learnedNumExps)),
@@ -613,9 +613,9 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 ### FIGURE 7: lossConvGen ###
 #############################
 def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvGen'):
-    splitNames, origlosses, origNumExps, _, _, _ = loadLossConv('data/lossConvOrig.npz')
-    _, newPotlosses, newPotNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz')
-    _, newAlllosses, newAllNumExps, _, _, _ = loadLossConv('data/lossConvAllNew.npz', 30)
+    splitNames, origlosses, origNumExps, _, _, _ = loadLossConv('data/lossConvOrig.npz', True)
+    _, newPotlosses, newPotNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz', True)
+    _, newAlllosses, newAllNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz', True, 30)
     losses = [origlosses, newPotlosses, newAlllosses]
     numExps = [origNumExps, newPotNumExps, newAllNumExps]
 
@@ -629,18 +629,9 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     linSty = ['-', '--', '-']
 
     for i, loss in enumerate(losses):
-        lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B = loss
-
-        trotMin = np.argmin(lossTrot)
-        strangMin = np.argmin(lossStrang)
-        yoshMin = np.argmin(lossYosh)
-        learn5AMin = np.argmin(lossLearn5A)
-        learn8AMin = np.argmin(lossLearn8A)
-        learn8BMin = np.argmin(lossLearn8B)
-        minInds = [trotMin, strangMin, yoshMin, learn5AMin, learn8AMin, learn8BMin]
-
-        for j, splitCol in enumerate(getSplitColours()):
-            plotTo = minInds[j]+1
+        minInds = [np.argmin(lossSub)+1 for lossSub in loss]
+        for j, splitCol in enumerate(getSplitColours(False, True)):
+            plotTo = minInds[j]
             axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
     
     axs[0].loglog(numExps[0][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
@@ -663,7 +654,7 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     axs[0].legend(loc='best', handles=handles)
 
     handles, _ = axs[1].get_legend_handles_labels()
-    for i, splitCol in enumerate(getSplitColours()):
+    for i, splitCol in enumerate(getSplitColours(False, True)):
         handle = mpatches.Patch(color=splitCol, label=splitNames[i])
         handles.extend([handle])
     axs[1].legend(loc='best', handles=handles, ncols=2)
@@ -696,6 +687,7 @@ def plotLossLandGen(pageFracWidth=0.66, aspectRatio=1.0, fileType='.png', name='
     img = ax.scatter3D(xArr, yArr, zArr, c=lossArr, cmap=plt.gray(), alpha=0.3, s = sArr, vmin= 0.0, vmax=2.0, linewidths=0)
     ax.scatter3D(xsPlus[inBoxPlus], ysPlus[inBoxPlus], zs[inBoxPlus], c='blue', label=r'$4^\mathrm{th}$ Order manifold')
     ax.scatter3D(xsMinus[inBoxMinus], ysMinus[inBoxMinus], zs[inBoxMinus], c='pink', label=r'_$4^\mathrm{th}$ Order manifold')
+    # TODO: Get from getSplitNames(), getSplitColours(), getSymSplitGamma()
     ax.scatter3D(0.125, 0.25, 0.25, c='green', label=r'$4 \times$ Strang') # PolyStrang
     ax.scatter3D(0.36266572103945605, -0.10032032403589856, -0.1352975465549758, c='red', label='Learn5A') # Learn5A
 
@@ -889,13 +881,11 @@ def plotParamOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='p
     plt.close('all')
     fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
     handles, _ = axs[0].get_legend_handles_labels()
-    # handles = []
 
     for i, allLearn in enumerate(allLearns):
         handle = pipeLine(axs, allLearn[0], allLearn[1], allLearn[2], allLearn[3], allLearn[4], 
                           allLearn[5], allLearn[6], allLearn[7], splitColours[i+3], splitNames[i+3], allLearn[8])
         handles.extend(handle)
-        # handles.append(handle)
         
     axs[0].set_xlabel(r'Training iteration')
     axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
@@ -960,10 +950,10 @@ plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
 # plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
-# plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
-# plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
-# plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
-# plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
-# plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
-# plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
-# plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
+plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
+plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
+plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
+plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
+plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
+plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
+plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
