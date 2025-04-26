@@ -512,9 +512,7 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
     alphas, betas = getSplitAlphaBeta(True, True)
     splitColours = getSplitColours(True, True)
     for i, splitName in enumerate(getSplitNames(True, True)):
-        pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName, 10.0)
-    
-    ax.plot(np.array([0.0, 1.0]), np.array([0.0, 1.0]), color='grey', label='Exact Sol', zorder=0)
+        pipeLine(ax, alphas[i], betas[i], splitColours[i], splitName)
 
     ax.legend(loc='center', ncols=1, bbox_to_anchor=(-0.23, 0.5))
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
@@ -527,7 +525,8 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 ##########################
 def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv'):
     splitNames, losses, numExps, lowQs, highQs, _ = loadLossConv('data/lossConvOrig.npz', True)
-    minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
+    # minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
+    minInds = [len(loss) for loss in losses] # Can set to all data
 
     # Set up fig
     plt.close('all')
@@ -562,29 +561,41 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     lossTrot, lossStrang, lossYosh, lossLearn5A, lossLearn8A, lossLearn8B, lossLearn5AProj, lossBlanes4, lossBlanes7 = losses
     numExpsTrot, numExpsStrang, numExpsYosh, numExpsLearn5A, numExpsLearn8A, numExpsLearn8B, numExpsLearn5AProj, numExpsBlanes4, numExpsBlanes7 = numExps
 
-    classicalNumExps = np.concatenate((numExpsTrot, numExpsStrang, numExpsYosh), axis=0)
-    learnedNumExps   = np.concatenate((numExpsLearn5A, numExpsLearn8A, numExpsLearn8B), axis=0)
+    classicalNumExps = np.concatenate((numExpsTrot, numExpsStrang, numExpsYosh, numExpsBlanes4, numExpsBlanes7), axis=0)
+    learnedNumExps = np.concatenate((numExpsLearn5A, numExpsLearn8A, numExpsLearn8B, numExpsLearn5AProj), axis=0)
 
     numExpsCommon = np.geomspace(max(min(classicalNumExps), min(learnedNumExps)),
                                  min(max(classicalNumExps), max(learnedNumExps)), 100000)
     
-    lossTrotCommon   = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsTrot)  , np.log(lossTrot)  ))
-    lossStrangCommon = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsStrang), np.log(lossStrang)))
-    lossYoshCommon   = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsYosh)  , np.log(lossYosh)  ))
+    lossTrotCommon    = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsTrot)   , np.log(lossTrot)   ))
+    lossStrangCommon  = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsStrang) , np.log(lossStrang) ))
+    lossYoshCommon    = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsYosh)   , np.log(lossYosh)   ))
+    lossBlanes4Common = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsBlanes4), np.log(lossBlanes4)))
+    lossBlanes7Common = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsBlanes7), np.log(lossBlanes7)))
 
-    lossLearn5ACommon = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn5A), np.log(lossLearn5A)))
-    lossLearn8ACommon = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn8A), np.log(lossLearn8A)))
-    lossLearn8BCommon = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn8B), np.log(lossLearn8B)))
+    lossLearn5ACommon     = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn5A    ), np.log(lossLearn5A    )))
+    lossLearn8ACommon     = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn8A    ), np.log(lossLearn8A    )))
+    lossLearn8BCommon     = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn8B    ), np.log(lossLearn8B    )))
+    lossLearn5AProjCommon = np.exp(np.interp(np.log(numExpsCommon), np.log(numExpsLearn5AProj), np.log(lossLearn5AProj)))
 
-    ratioAll = np.fmin(np.fmin(lossTrotCommon, lossStrangCommon), lossYoshCommon) / np.fmin(np.fmin(lossLearn5ACommon, lossLearn8ACommon), lossLearn8BCommon)
-    ratioYosh5A = lossYoshCommon / lossLearn5ACommon
-    ratioYosh8A = lossYoshCommon / lossLearn8ACommon
-    ratioYosh8B = lossYoshCommon / lossLearn8BCommon
+    ratioAll = np.fmin(np.fmin(np.fmin(np.fmin(lossTrotCommon, lossStrangCommon), lossYoshCommon), lossBlanes4Common), lossBlanes7Common) / np.fmin(np.fmin(np.fmin(lossLearn5ACommon, lossLearn8ACommon), lossLearn8BCommon), lossLearn5AProjCommon)
+    ratioBlanes7L5A = lossBlanes7Common / lossLearn5ACommon
+    ratioBlanes7L8A = lossBlanes7Common / lossLearn8ACommon
+    ratioBlanes7L8B = lossBlanes7Common / lossLearn8BCommon
+    ratioBlanes7L5P = lossBlanes7Common / lossLearn5AProjCommon
 
-    allMin = np.argmin(ratioAll)
-    yosh5AMin = np.argmin(ratioYosh5A)
-    yosh8AMin = np.argmin(ratioYosh8A)
-    yosh8BMin = np.argmin(ratioYosh8B)
+    # allMin = np.argmin(ratioAll)+1
+    # blanes7L5AMin = np.argmin(ratioBlanes7L5A)+1
+    # blanes7L8AMin = np.argmin(ratioBlanes7L8A)+1
+    # blanes7L8BMin = np.argmin(ratioBlanes7L8B)+1
+    # blanes7L5PMin = np.argmin(ratioBlanes7L5P)+1
+    
+    # Can set to all data
+    allMin = len(ratioAll) 
+    blanes7L5AMin = len(ratioBlanes7L5A)
+    blanes7L8AMin = len(ratioBlanes7L8A)
+    blanes7L8BMin = len(ratioBlanes7L8B)
+    blanes7L5PMin = len(ratioBlanes7L5P)
 
     # Set up fig
     plt.close('all')
@@ -592,15 +603,16 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     ax.set_xlabel(r'number of exponentials')
     ax.set_ylabel(r'relative advantage of learned')
 
-    minMin = np.min([allMin, yosh5AMin, yosh8AMin, yosh8BMin])
-    ax.loglog(numExpsCommon[:minMin+1], (minMin+1)*[1.0], 'black', linestyle='-', alpha=1.0, label=r'Equal performance')
+    minMin = np.min([allMin, blanes7L5AMin, blanes7L8AMin, blanes7L8BMin, blanes7L5PMin])
+    ax.loglog(numExpsCommon[:minMin], minMin*[1.0], 'black', linestyle='-', alpha=1.0, label=r'Equal performance')
     ax.text(1.8*10**5, 5.0/4.0, 'learned better', ha="center", va="bottom")
     ax.text(1.8*10**5, 4.0/5.0, 'classical better', ha="center", va="top")
 
-    ax.loglog(numExpsCommon[:allMin+1], ratioAll[:allMin+1], 'grey', linestyle='-', marker='', alpha=1.0, label='Best Classical vs Best Learned')
-    ax.loglog(numExpsCommon[:yosh5AMin+1], ratioYosh5A[:yosh5AMin+1], 'forestgreen' , linestyle='-', marker='', alpha=1.0, label='Yoshida vs Learn5A')
-    ax.loglog(numExpsCommon[:yosh8AMin+1], ratioYosh8A[:yosh8AMin+1], 'royalblue'   , linestyle='-', marker='', alpha=1.0, label='Yoshida vs Learn8A')
-    ax.loglog(numExpsCommon[:yosh8BMin+1], ratioYosh8B[:yosh8BMin+1], 'lightskyblue', linestyle='-', marker='', alpha=1.0, label='Yoshida vs Learn8B')
+    ax.loglog(numExpsCommon[:allMin], ratioAll[:allMin], 'grey', linestyle='-', marker='', alpha=1.0, label='Best Classical vs Best Learned')
+    ax.loglog(numExpsCommon[:blanes7L5AMin], ratioBlanes7L5A[:blanes7L5AMin], 'forestgreen' , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5A')
+    ax.loglog(numExpsCommon[:blanes7L8AMin], ratioBlanes7L8A[:blanes7L8AMin], 'royalblue'   , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8A')
+    ax.loglog(numExpsCommon[:blanes7L8BMin], ratioBlanes7L8B[:blanes7L8BMin], 'lightskyblue', linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8B')
+    ax.loglog(numExpsCommon[:blanes7L5PMin], ratioBlanes7L5P[:blanes7L5PMin], 'lime'        , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5AProj')
 
     ax.legend(loc='best')
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
@@ -615,7 +627,7 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConvGen'):
     splitNames, origlosses, origNumExps, _, _, _ = loadLossConv('data/lossConvOrig.npz', True)
     _, newPotlosses, newPotNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz', True)
-    _, newAlllosses, newAllNumExps, _, _, _ = loadLossConv('data/lossConvNewPot.npz', True, 30)
+    _, newAlllosses, newAllNumExps, _, _, _ = loadLossConv('data/lossConvAllNew.npz', True, 30)
     losses = [origlosses, newPotlosses, newAlllosses]
     numExps = [origNumExps, newPotNumExps, newAllNumExps]
 
@@ -629,7 +641,8 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     linSty = ['-', '--', '-']
 
     for i, loss in enumerate(losses):
-        minInds = [np.argmin(lossSub)+1 for lossSub in loss]
+        # minInds = [np.argmin(lossSub)+1 for lossSub in loss]
+        minInds = [len(lossSub) for lossSub in loss]
         for j, splitCol in enumerate(getSplitColours(False, True)):
             plotTo = minInds[j]
             axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
@@ -791,7 +804,7 @@ def plotLoss2dPlanesGen(pageFracWidth=0.8, aspectRatio=1.0, fileType='.png', nam
         axs[1,i].set_xlabel(xLabels[i])
         axs[1,i].set_ylabel(yLabels[i])
 
-    minima = [r'$\gamma = [0.125, 0.25, 0.25]$', r'$\gamma = [0.3314, -0.07304, -0.1821]$']
+    minima = [r'$\gamma = [0.125, 0.25, 0.25]$', r'$\gamma = [0.331, -0.073, -0.182]$']
     for i in range(2):
         tempAx = axs[i,2].twinx()
         tempAx.set_ylabel(minima[i])
@@ -949,7 +962,7 @@ plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
 plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
 plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
-# plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
+plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
 plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
 plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
 plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
