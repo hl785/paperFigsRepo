@@ -635,6 +635,32 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
+    #### Generate table
+    # number of exponentials
+    optExp = np.argmax(ratioAll)
+    lossTable = {"Trotter":lossTrotCommon,
+                 "Strang":lossStrangCommon,
+                 "Yoshida":lossYoshCommon,
+                 "Blanes4":lossBlanes4Common,
+                 "Blanes7":lossBlanes7Common,
+                 "Learn5A":lossLearn5ACommon,
+                 "Learn8A":lossLearn8ACommon,
+                 "Learn8B":lossLearn8BCommon,
+                 "Learn5AProj":lossLearn5AProjCommon}    
+    lossBlanes7 = lossTable["Blanes7"][optExp]
+    
+    with open(name+"table.tex",encoding="utf-8", mode="w") as f:
+        print(r"\begin{tabular}{ |c|c|c|c| }",file=f)
+        print(r"\hline",file=f)
+        print(r"\multirow{2}{*}{\textbf{Splitting}} & \textbf{$L_2$-error for} & \textbf{Rel accuracy} & \textbf{Rel speed} \\ ",file=f)
+        print(r"& \textbf{$",int(round(numExpsCommon[optExp])),r"$ subflows} & \textbf{vs Blanes7}  & \textbf{vs Balnes7} \\",file=f)
+        print(r"\hline \hline",file=f)
+        for method, loss in lossTable.items():       
+            sameErrorExp = np.argmin((loss-lossBlanes7)**2)
+            speedup =numExpsCommon[optExp]/numExpsCommon[sameErrorExp]
+            print(f"{method:16s} & ${loss[optExp]:8.3f}$ & ${lossBlanes7/loss[optExp]:8.2f}$ & ${speedup:8.2f}$",end="",file=f)
+            print(r"\\\hline",file=f)
+        print(r"\end{tabular}",file=f)
 #############################
 ### FIGURE 7: lossConvGen ###
 #############################
