@@ -615,20 +615,23 @@ def plotLossRelAdv(pageFracWidth=0.85, aspectRatio=1.7, fileType='.png', name='l
     ax.set_ylabel(r'relative advantage of learned')
 
     minMin = np.min([allMin, blanes7L5AMin, blanes7L8AMin, blanes7L8BMin, blanes7L5PMin])
-    ax.loglog(numExpsCommon[:minMin], minMin*[1.0], 'black', linestyle='-', alpha=1.0, label=r'Equal performance')
-    ax.text(1.8*10**5, 5.0/4.0, 'learned better', ha="center", va="bottom")
-    ax.text(1.8*10**5, 4.0/5.0, 'classical better', ha="center", va="top")
+    ax.plot(numExpsCommon[:minMin], minMin*[1.0], 'black', linestyle='-', alpha=1.0, label=r'Equal performance')
+    ax.text(1.8E4, 1.05, 'learned better', ha="center", va="bottom")
+    ax.text(1.8E4, 0.95, 'classical better', ha="center", va="top")
+    
+    ax.plot(numExpsCommon[:blanes7L5AMin], ratioBlanes7L5A[:blanes7L5AMin], 'forestgreen' , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5A')
+    ax.plot(numExpsCommon[:blanes7L8AMin], ratioBlanes7L8A[:blanes7L8AMin], 'royalblue'   , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8A')
+    ax.plot(numExpsCommon[:blanes7L8BMin], ratioBlanes7L8B[:blanes7L8BMin], 'lightskyblue', linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8B')
+    ax.plot(numExpsCommon[:blanes7L5PMin], ratioBlanes7L5P[:blanes7L5PMin], 'lime'        , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5AProj')
+    ax.plot(numExpsCommon[:allMin], ratioAll[:allMin], 'black', linestyle=':', linewidth=2,marker='', alpha=1.0, label='Best Classical vs Best Learned')
 
-    ax.loglog(numExpsCommon[:allMin], ratioAll[:allMin], 'grey', linestyle='-', marker='', alpha=1.0, label='Best Classical vs Best Learned')
-    ax.loglog(numExpsCommon[:blanes7L5AMin], ratioBlanes7L5A[:blanes7L5AMin], 'forestgreen' , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5A')
-    ax.loglog(numExpsCommon[:blanes7L8AMin], ratioBlanes7L8A[:blanes7L8AMin], 'royalblue'   , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8A')
-    ax.loglog(numExpsCommon[:blanes7L8BMin], ratioBlanes7L8B[:blanes7L8BMin], 'lightskyblue', linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn8B')
-    ax.loglog(numExpsCommon[:blanes7L5PMin], ratioBlanes7L5P[:blanes7L5PMin], 'lime'        , linestyle='-', marker='', alpha=1.0, label='Blanes7 vs Learn5AProj')
-
-    ax.legend(loc='best')
+    ax.legend(loc='upper right',ncols=2,fontsize=9)
     ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
     ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
     ax.set_xscale('log')
+    ax.set_ylim(0,2)
+    ax.set_xlim(None,4E5)
+    ax.set_yscale("linear")
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
