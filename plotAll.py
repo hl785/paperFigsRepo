@@ -523,7 +523,7 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 ##########################
 ### FIGURE 5: lossConv ###
 ##########################
-def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv'):
+def plotLossConv(pageFracWidth=0.95, aspectRatio=2.0, fileType='.png', name='lossConv'):
     splitNames, losses, numExps, lowQs, highQs, _ = loadLossConv('data/lossConvOrig.npz', True)
     minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
 
@@ -548,7 +548,7 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
             ax.loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
             ax.loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
 
-        ax.legend(loc='best', ncols=1)
+        ax.legend(loc='best', ncols=1,fontsize=9)
         ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
         ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
         ax.set_xscale('log')
@@ -557,6 +557,8 @@ def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='los
             ax.set_ylim(1e-4, 3)
             ax.set_xticks([100, 200, 400, 1000, 2000])
             ax.set_xticklabels([100, 200, 400, 1000, 2000])
+        if j == 1:
+            ax.set_ylabel(None)
     
     axs[1].annotate("Unitarity bound",xy=(2e3, 1.5))
 
