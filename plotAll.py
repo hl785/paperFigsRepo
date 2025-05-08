@@ -525,31 +525,40 @@ def plotSplitVisLearn(pageFracWidth=0.8, aspectRatio=2.0, fileType='.png', name=
 ##########################
 def plotLossConv(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv'):
     splitNames, losses, numExps, lowQs, highQs, _ = loadLossConv('data/lossConvOrig.npz', True)
-    # minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
-    minInds = [len(loss) for loss in losses] # Can set to all data
+    minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
 
     # Set up fig
     plt.close('all')
-    fig, ax = plt.subplots(1, 1, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
-    ax.set_xlabel(r'number of exponentials')
-    ax.set_ylabel(r'func $L_2$ norm')
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
+    for j, ax in enumerate(axs):
+        ax.set_xlabel(r'number of exponentials')
+        ax.set_ylabel(r'func $L_2$ norm')        
+        for i, splitCol in enumerate(getSplitColours(False, True)):
+            label = splitNames[i] if j == 0 else None
+            plotTo = minInds[i]            
+            if splitNames[i] == "Learn5AProj":
+                plotTo -= 1
+            filtExps = numExps[i][:plotTo]
+            ax.loglog(filtExps, losses[i][:plotTo], splitCol, linestyle='-', marker='', alpha=1.0, label=label)
+            ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.2, linewidth=0)
+        ax.loglog(numExps[0][:10],10 * [2],"black",linestyle="-",alpha=0.5)
+        orderLineWidth = np.array([200, 1000])
+        if j==1:
+            ax.loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
+            ax.loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
+            ax.loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
 
-    for i, splitCol in enumerate(getSplitColours(False, True)):
-        plotTo = minInds[i]
-        filtExps = numExps[i][:plotTo]
-        ax.loglog(filtExps, losses[i][:plotTo], splitCol, linestyle='-', marker='', alpha=1.0, label=splitNames[i])
-        ax.fill_between(filtExps, lowQs[i][:plotTo], highQs[i][:plotTo], color=splitCol, alpha=0.2, linewidth=0)
-
-    ax.loglog(numExps[0][:10], 10*[2], 'black', linestyle='-', alpha=0.5, label=r'Unitarity')
-    orderLineWidth = np.array([200, 1000])
-    ax.loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5, label=r'Order 1, 2, 4')
-    ax.loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
-    ax.loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
-
-    ax.legend(loc='best', ncols=3)
-    ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
-    ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
-    ax.set_xscale('log')
+        ax.legend(loc='best', ncols=1)
+        ax.grid(which='major', color='#CCCCCC', linewidth=1.0)
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+        ax.set_xscale('log')
+        if j == 0:
+            ax.set_xlim(100, 2.1e3)
+            ax.set_ylim(1e-4, 3)
+            ax.set_xticks([100, 200, 400, 1000, 2000])
+            ax.set_xticklabels([100, 200, 400, 1000, 2000])
+    
+    axs[1].annotate("Unitarity bound",xy=(2e3, 1.5))
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
@@ -957,16 +966,16 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 ##################
 ### CALL PLOTS ###
 ##################
-plotParamTransform( 0.85, 3.7, '.png', 'paramTransform' )
-plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
-plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
-plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
+#plotParamTransform( 0.85, 3.7, '.png', 'paramTransform' )
+#plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
+#plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
+#plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
 plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
-plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
-plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
-plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
-plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
-plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
-plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
-plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
+#plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
+#plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
+#plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
+#plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
+#plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
+#plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
+#plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
+#plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
