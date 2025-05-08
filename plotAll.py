@@ -681,8 +681,9 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     linSty = ['-', '--', '-']
 
     for i, loss in enumerate(losses):
-        # minInds = [np.argmin(lossSub)+1 for lossSub in loss]
-        minInds = [len(lossSub) for lossSub in loss]
+        minInds = [np.argmin(lossSub)+1 for lossSub in loss]        
+        #minInds = [len(lossSub) for lossSub in loss]
+        minInds[6] -= 1
         for j, splitCol in enumerate(getSplitColours(False, True)):
             plotTo = minInds[j]
             axs[axsList[i]].loglog(numExps[i][j][:plotTo], loss[j][:plotTo], splitCol, linestyle=linSty[i], marker='', alpha=1.0)
@@ -693,11 +694,11 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     axs[0].loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
     axs[0].loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
     
-    orderLineWidth = 4*np.array([200, 1000])
+    orderLineWidth = 4*np.array([1E4, 5E4])
     axs[1].loglog(numExps[2][0][:10], 10*[2], 'black', linestyle='-', alpha=0.5)
-    axs[1].loglog(orderLineWidth, (1.00e-3/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5)
-    axs[1].loglog(orderLineWidth, (3.33e-4/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
-    axs[1].loglog(orderLineWidth, (1.00e-4/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (1.00e-7/(orderLineWidth[0]**-1.0)) * np.power(orderLineWidth, -1.0), 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (3.33e-8/(orderLineWidth[0]**-2.0)) * np.power(orderLineWidth, -2.0), 'black', linestyle=':', alpha=0.5)
+    axs[1].loglog(orderLineWidth, (1.00e-8/(orderLineWidth[0]**-4.0)) * np.power(orderLineWidth, -4.0), 'black', linestyle=':', alpha=0.5)
 
     # Auxiliary settings
     handles, _ = axs[0].get_legend_handles_labels()
@@ -710,7 +711,7 @@ def plotLossConvGen(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='
     for i, splitCol in enumerate(getSplitColours(False, True)):
         handle = mpatches.Patch(color=splitCol, label=splitNames[i])
         handles.extend([handle])
-    axs[1].legend(loc='best', handles=handles, ncols=2)
+    axs[1].legend(loc='best', handles=handles, ncols=1)
 
     axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
     axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
