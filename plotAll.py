@@ -1769,10 +1769,10 @@ def plotLossConv2D(
     ax.loglog(
         numExps[0][:5], 5 * [2], "black", linestyle="-", alpha=0.5, label=r"Unitarity"
     )
-    orderLineWidth = np.array([200, 1000])
+    orderLineWidth = np.array([500, 1000])
     ax.loglog(
         orderLineWidth,
-        (1.00e-3 / (orderLineWidth[0] ** -1.0)) * np.power(orderLineWidth, -1.0),
+        (2.00e-3 / (orderLineWidth[0] ** -1.0)) * np.power(orderLineWidth, -1.0),
         "black",
         linestyle=":",
         alpha=0.5,
@@ -1780,24 +1780,25 @@ def plotLossConv2D(
     )
     ax.loglog(
         orderLineWidth,
-        (3.33e-4 / (orderLineWidth[0] ** -2.0)) * np.power(orderLineWidth, -2.0),
+        (1e-3 / (orderLineWidth[0] ** -2.0)) * np.power(orderLineWidth, -2.0),
         "black",
         linestyle=":",
         alpha=0.5,
     )
     ax.loglog(
         orderLineWidth,
-        (1.00e-4 / (orderLineWidth[0] ** -4.0)) * np.power(orderLineWidth, -4.0),
+        (5e-4 / (orderLineWidth[0] ** -4.0)) * np.power(orderLineWidth, -4.0),
         "black",
         linestyle=":",
         alpha=0.5,
     )
 
-    ax.legend(loc="best", ncols=3)
+    ax.legend(loc="best", ncols=1)
     ax.grid(which="major", color="#CCCCCC", linewidth=1.0)
     ax.grid(which="minor", color="#DDDDDD", linestyle=":", linewidth=0.7)
     ax.set_xscale("log")
-
+    ax.set_xlim(100, 2800)
+    ax.set_ylim(1e-5, 4)
     fig.savefig(
         name + fileType, bbox_inches="tight", transparent=True, dpi=getDPI(fileType)
     )
@@ -1821,4 +1822,4 @@ plotLoss2dPlanesGen(0.85, 1.7, ".png", "loss2dPlanesGen")
 plotSampleInitConds(0.85, 2.0, ".png", "sampleInitConds")
 plotParamOptim(0.85, 3.2, ".png", "paramOptim")
 plotAllOptims(0.85, 4.0, ".png", "allOptims")
-plotLossConv2D(0.85, 2.0, ".png", "lossConv2D")
+plotLossConv2D(0.55, 1.2, ".png", "lossConv2D")
