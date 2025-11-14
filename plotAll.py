@@ -343,6 +343,15 @@ def loadParamLossOptims():
             [lionL0p01M0p10Loss, lionL0p01M0p10X, lionL0p01M0p10Y, lionL0p01M0p10Z, 'forestgreen'    , 'Lion 0.1'     ], 
             [lemaL0p20M0p05Loss, lemaL0p20M0p05X, lemaL0p20M0p05Y, lemaL0p20M0p05Z, 'royalblue'      , 'Lev-Marq 0.05'], 
             [lemaL0p20M0p10Loss, lemaL0p20M0p10X, lemaL0p20M0p10Y, lemaL0p20M0p10Z, 'lightskyblue'   , 'Lev-Marq 0.1' ]]
+    
+def loadTrainDataSizeCorr():
+    with np.load('data/trainDataSizeCorr.npz') as data:
+        trainingSetSizes = data['trainingSetSizes']
+        trainL2Loss = data['trainL2Loss']
+        valL2Loss = data['valL2Loss']
+        params = data['params']
+
+    return trainingSetSizes, trainL2Loss, valL2Loss, params
 
 ###################################################################################################################################
 
@@ -993,9 +1002,9 @@ def plotAllOptims(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='al
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
-############################
-### FIGURE R1: allOptims ###
-############################
+#############################
+### FIGURE R1: lossConv2D ###
+#############################
 def plotLossConv2D(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='lossConv2D'):
     splitNames, losses, numExps, lowQs, highQs, _ = loadLossConv('data/lossConv2D.npz', True)
     # minInds = [np.argmin(loss)+1 for loss in losses] # TODO: Check why the +1 does not overflow
@@ -1026,22 +1035,65 @@ def plotLossConv2D(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='l
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
+#####################################
+### FIGURE R2: trainDataSizeOptim ###
+#####################################
+def plotTrainDataSizeOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png', name='trainDataSizeOptim'):
+    trainingSetSizes, trainL2Loss, valL2Loss, _ = loadTrainDataSizeCorr()
+    numTrainSizes, numEpochs = trainL2Loss.shape
+    maxTrainSizeCol = getSplitColours()[4]
+    xRange = np.arange(numEpochs)+1
+    alphas = np.linspace(0.3, 1.0, numTrainSizes)
+    infDataThreshhold = 10**5
+
+    def pipeLine(axs, trainLoss, valLoss, trainSize, color, alpha, infDataThreshhold = 10**5):
+        infSymb = r'$\infty$'
+        handle = axs[0].plot(xRange, trainLoss, color=color, linestyle='-', alpha=alpha, label=f'Train size {trainSize if trainSize < infDataThreshhold else infSymb}')
+        axs[1].plot(xRange, valLoss, color=color, linestyle='-', alpha=alpha)
+        return handle
+
+    # Set up fig
+    plt.close('all')
+    fig, axs = plt.subplots(1, 2, figsize=(toFigSize(pageFracWidth, aspectRatio)), layout='constrained')
+    handles, _ = axs[0].get_legend_handles_labels()
+
+    for i in range(numTrainSizes):
+        handle = pipeLine(axs, trainL2Loss[i], valL2Loss[i], trainingSetSizes[i], maxTrainSizeCol, alphas[i])
+        handles.extend(handle)
+        
+    axs[0].set_xlabel(r'Training iteration')
+    axs[0].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+        
+    axs[1].set_xlabel(r'Training iteration')
+    axs[1].grid(which='major', color='#CCCCCC', linewidth=1.0)
+    axs[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.7)
+
+    axs[0].set_yscale('log')
+    axs[0].set_ylabel(r'Train $L_2$ error')
+    axs[1].set_yscale('log')
+    axs[1].set_ylabel(r'Validation $L_2$ error')
+    axs[0].legend(handles=handles, loc='best')
+
+    fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
+
 ###################################################################################################################################
 
 ##################
 ### CALL PLOTS ###
 ##################
-plotParamTransform( 0.85, 3.7, '.png', 'paramTransform' )
-plotLossLandscape(  0.85, 1.2, '.png', 'lossLandscape'  )
-plotLoss2dPlanes(   0.85, 1.7, '.png', 'loss2dPlanes'   )
-plotSplitVisLearn(  0.85, 2.8, '.png', 'splitVisLearn'  )
-plotLossConv(       0.85, 2.0, '.png', 'lossConv'       )
-plotLossRelAdv(     0.85, 2.4, '.png', 'lossRelAdv'     )
-plotLossConvGen(    0.85, 2.0, '.png', 'lossConvGen'    )
-plotLossLandGen(    0.85, 1.2, '.png', 'lossLandGen'    )
-plotBestFitCoefs(   0.85, 2.4, '.png', 'bestFitCoefs'   )
-plotLoss2dPlanesGen(0.85, 1.7, '.png', 'loss2dPlanesGen')
-plotSampleInitConds(0.85, 2.0, '.png', 'sampleInitConds')
-plotParamOptim(     0.85, 3.2, '.png', 'paramOptim'     )
-plotAllOptims(      0.85, 4.0, '.png', 'allOptims'      )
-plotLossConv2D(     0.85, 2.0, '.png', 'lossConv2D'     )
+plotParamTransform(    0.85, 3.7, '.png', 'paramTransform'    )
+plotLossLandscape(     0.85, 1.2, '.png', 'lossLandscape'     )
+plotLoss2dPlanes(      0.85, 1.7, '.png', 'loss2dPlanes'      )
+plotSplitVisLearn(     0.85, 2.8, '.png', 'splitVisLearn'     )
+plotLossConv(          0.85, 2.0, '.png', 'lossConv'          )
+plotLossRelAdv(        0.85, 2.4, '.png', 'lossRelAdv'        )
+plotLossConvGen(       0.85, 2.0, '.png', 'lossConvGen'       )
+plotLossLandGen(       0.85, 1.2, '.png', 'lossLandGen'       )
+plotBestFitCoefs(      0.85, 2.4, '.png', 'bestFitCoefs'      )
+plotLoss2dPlanesGen(   0.85, 1.7, '.png', 'loss2dPlanesGen'   )
+plotSampleInitConds(   0.85, 2.0, '.png', 'sampleInitConds'   )
+plotParamOptim(        0.85, 3.2, '.png', 'paramOptim'        )
+plotAllOptims(         0.85, 4.0, '.png', 'allOptims'         )
+plotLossConv2D(        0.85, 2.0, '.png', 'lossConv2D'        )
+plotTrainDataSizeOptim(0.85, 4.0, '.png', 'trainDataSizeOptim')
