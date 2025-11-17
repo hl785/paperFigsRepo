@@ -1824,7 +1824,7 @@ def plotTrainDataSizeOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png',
 
     def pipeLine(axs, trainLoss, valLoss, trainSize, color, alpha, infDataThreshhold = 10**5):
         infSymb = r'$\infty$'
-        handle = axs[0].plot(xRange, trainLoss, color=color, linestyle='-', alpha=alpha, label=f'Train size {trainSize if trainSize < infDataThreshhold else infSymb}')
+        handle = axs[0].plot(xRange, trainLoss, color=color, linestyle='-', alpha=alpha, label=f'{trainSize if trainSize < infDataThreshhold else infSymb}')
         axs[1].plot(xRange, valLoss, color=color, linestyle='-', alpha=alpha)
         return handle
 
@@ -1849,7 +1849,9 @@ def plotTrainDataSizeOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png',
     axs[0].set_ylabel(r'Train $L_2$ error')
     axs[1].set_yscale('log')
     axs[1].set_ylabel(r'Validation $L_2$ error')
-    axs[0].legend(handles=handles, loc='best')
+    axs[0].legend(handles=handles, loc='best',ncol=2)
+    for ax in axs:
+        ax.set_ylim(1E-3,0.7)
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
@@ -1872,4 +1874,4 @@ plotSampleInitConds(0.85, 2.0, ".png", "sampleInitConds")
 plotParamOptim(0.85, 3.2, ".png", "paramOptim")
 plotAllOptims(0.85, 4.0, ".png", "allOptims")
 plotLossConv2D(0.55, 1.2, ".png", "lossConv2D")
-plotTrainDataSizeOptim(0.85, 4.0, '.png', 'trainDataSizeOptim')
+plotTrainDataSizeOptim(0.9, 4.0, '.png', 'trainDataSizeOptim')
