@@ -327,17 +327,7 @@ def loadLossConv(path, incLearn5AProj=False, timeRange=10):
     )
 
 
-def loadLossLand(path):
-    with np.load(path) as data:
-        gammaVals1 = data["possibleVals1"]
-        gammaVals2 = data["possibleVals2"]
-        gammaVals3 = data["possibleVals3"]
-        lossArr = data["allData"]
-
-    # Scale of points
-    minLoss = np.min(lossArr)
-    maxLoss = np.max(lossArr)
-
+def loadLossLandCommon(gammaVals1, gammaVals2, gammaVals3, lossArr, minLoss, maxLoss):
     xArr = np.zeros_like(lossArr)
     yArr = np.zeros_like(lossArr)
     zArr = np.zeros_like(lossArr)
@@ -353,6 +343,47 @@ def loadLossLand(path):
                 )
 
     return lossArr, xArr, yArr, zArr, sArr
+
+def loadLossLand(path):
+    with np.load(path) as data:
+        gammaVals1 = data["possibleVals1"]
+        gammaVals2 = data["possibleVals2"]
+        gammaVals3 = data["possibleVals3"]
+        lossArr = data["allData"]
+
+    # Scale of points
+    minLoss = np.min(lossArr)
+    maxLoss = np.max(lossArr)
+
+    return loadLossLandCommon(gammaVals1, gammaVals2, gammaVals3, lossArr, minLoss, maxLoss)
+
+def loadLossLands(path):
+    with np.load(path) as data:
+        gammaVals1 = data["possibleVals1"]
+        gammaVals2 = data["possibleVals2"]
+        gammaVals3 = data["possibleVals3"]
+        randInits =  data["randInits"]
+        lossArrs = data["allData"]
+
+    # Scale of points
+    minLoss = np.min(lossArrs)
+    maxLoss = np.max(lossArrs)
+
+    lossArrList = []
+    xArrList = []
+    yArrList = []
+    zArrList = []
+    sArrList = []
+    for i in range(len(randInits)):
+        lossArr = lossArrs[:,:,:,i]
+        lossArr, xArr, yArr, zArr, sArr = loadLossLandCommon(gammaVals1, gammaVals2, gammaVals3, lossArr, minLoss, maxLoss)
+        lossArrList.append(lossArr)
+        xArrList.append(xArr)
+        yArrList.append(yArr)
+        zArrList.append(zArr)
+        sArrList.append(sArr)
+
+    return lossArrList, xArrList, yArrList, zArrList, sArrList, randInits
 
 
 def loadLand2dPlanes(path, name="losses"):
@@ -1855,6 +1886,50 @@ def plotTrainDataSizeOptim(pageFracWidth=0.85, aspectRatio=2.0, fileType='.png',
 
     fig.savefig(name+fileType, bbox_inches='tight', transparent=True, dpi=getDPI(fileType))
 
+
+#################################
+### FIGURE R3: lossLandscapes ###
+#################################
+def plotLossLandscapes(
+    pageFracWidth=0.85, aspectRatio=1.2, fileType=".png", name="lossLandscapes"
+):
+    lossArrs, xArrs, yArrs, zArrs, sArrs, randInits = loadLossLands("data/lossLandSingleInitCond.npz")
+    
+    for i, randInit in enumerate(randInits):
+        lossArr = lossArrs[i]
+        xArr = xArrs[i]
+        yArr = yArrs[i]
+        zArr = zArrs[i]
+        sArr = sArrs[i]
+
+        # Set up fig
+        plt.close("all")
+        fig = plt.figure(
+            figsize=(toFigSize(pageFracWidth, aspectRatio)), layout="constrained"
+        )
+        ax = plt.axes(projection="3d")
+
+        img = ax.scatter3D(
+            xArr,
+            yArr,
+            zArr,
+            c=lossArr,
+            cmap=plt.gray(),
+            alpha=0.3,
+            s=sArr,
+            vmin=0.0,
+            vmax=2.0,
+            linewidths=0,
+        )
+
+        ax.set_xlabel(r"$\gamma_1$")
+        ax.set_ylabel(r"$\gamma_2$")
+        ax.set_zlabel(r"$\gamma_3$")
+
+        fig.savefig(
+            name + f"{randInit}" + fileType, bbox_inches="tight", transparent=True, dpi=getDPI(fileType)
+        )
+
 ###################################################################################################################################
 
 ##################
@@ -1875,3 +1950,4 @@ plotParamOptim(0.85, 3.2, ".png", "paramOptim")
 plotAllOptims(0.85, 4.0, ".png", "allOptims")
 plotLossConv2D(0.55, 1.2, ".png", "lossConv2D")
 plotTrainDataSizeOptim(0.9, 4.0, '.png', 'trainDataSizeOptim')
+plotLossLandscapes(0.85, 1.2, ".png", "lossLandscapes")
